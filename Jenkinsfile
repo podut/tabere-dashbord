@@ -1,13 +1,19 @@
 pipeline {
     agent any
 
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+
     environment {
-        DOCKER_IMAGE   = 'podutpetru/airsoft-admin'
-        DOCKER_TAG     = "${BUILD_NUMBER}"
-        SUPABASE_URL   = 'https://supabase.petrupodut.dev'
-        SUPABASE_KEY   = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc0ODM2NTMyMCwiZXhwIjo0OTA0MDM4OTIwLCJyb2xlIjoiYW5vbiJ9.P_bRRo_PNTusZ2ydGnTxgSfsyxjNRmbvtYjN6JjF4bg'
-        STORAGE_BUCKET = 'assets'
-        COOLIFY_URL    = 'http://138.2.172.101:8000'
+        DOCKER_IMAGE           = 'podutpetru/airsoft-admin'
+        IMAGE_TAG              = "${BUILD_NUMBER}"
+        COOLIFY_URL            = 'https://coolify.petrupodut.dev'
+        COOLIFY_SERVICE_UUID   = 'SETEAZA_UUID_DIN_COOLIFY'
+        PUBLIC_SUPABASE_URL    = 'https://supabase.petrupodut.dev'
+        PUBLIC_SUPABASE_KEY    = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc0ODM2NTMyMCwiZXhwIjo0OTA0MDM4OTIwLCJyb2xlIjoiYW5vbiJ9.P_bRRo_PNTusZ2ydGnTxgSfsyxjNRmbvtYjN6JjF4bg'
+        PUBLIC_STORAGE_BUCKET  = 'assets'
     }
 
     stages {
@@ -22,29 +28,26 @@ pipeline {
             steps {
                 sh """
                     docker build \\
-                        --build-arg PUBLIC_SUPABASE_URL=${SUPABASE_URL} \\
-                        --build-arg PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY} \\
-                        --build-arg PUBLIC_STORAGE_BUCKET=${STORAGE_BUCKET} \\
-                        -t ${DOCKER_IMAGE}:${DOCKER_TAG} \\
+                        --build-arg PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL} \\
+                        --build-arg PUBLIC_SUPABASE_ANON_KEY=${PUBLIC_SUPABASE_KEY} \\
+                        --build-arg PUBLIC_STORAGE_BUCKET=${PUBLIC_STORAGE_BUCKET} \\
+                        -t ${DOCKER_IMAGE}:${IMAGE_TAG} \\
                         -t ${DOCKER_IMAGE}:latest \\
                         .
                 """
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhubrepo',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh """
-                        echo \${DOCKER_PASS} | docker login -u \${DOCKER_USER} --password-stdin
-                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-                        docker push ${DOCKER_IMAGE}:latest
-                        docker logout
-                    """
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh "docker push ${DOCKER_IMAGE}:${IMAGE_TAG}"
+                    sh "docker push ${DOCKER_IMAGE}:latest"
                 }
             }
         }
@@ -52,11 +55,13 @@ pipeline {
         stage('Deploy via Coolify') {
             steps {
                 withCredentials([string(credentialsId: 'coolify-token', variable: 'COOLIFY_TOKEN')]) {
-                    sh """
-                        curl -sf -X GET "${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_APP_UUID}&force=false" \\
-                            -H "Authorization: Bearer \${COOLIFY_TOKEN}" \\
-                            || echo 'Deploy triggered'
-                    """
+                    echo "Triggering Coolify redeploy..."
+                    sh "curl -sf -X GET -H 'Authorization: Bearer ${COOLIFY_TOKEN}' '${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_SERVICE_UUID}&force=false'"
+
+                    echo "Waiting 30s for container to start..."
+                    sh "sleep 30"
+
+                    sh "curl -sf --max-time 15 https://admin.taberehtcmx.ro/ || echo 'Health check: verifica manual'"
                 }
             }
         }
@@ -65,11 +70,11 @@ pipeline {
 
     post {
         always {
-            sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || true"
-            sh "docker rmi ${DOCKER_IMAGE}:latest || true"
+            sh "docker logout"
+            sh "docker rmi ${DOCKER_IMAGE}:${IMAGE_TAG} ${DOCKER_IMAGE}:latest || true"
         }
         success {
-            echo "Deploy reusit: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+            echo "Deploy airsoft-admin reusit: ${DOCKER_IMAGE}:${IMAGE_TAG}"
         }
         failure {
             echo "Pipeline esuat la build #${BUILD_NUMBER}"
