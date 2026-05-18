@@ -24,7 +24,6 @@
 	let bookingDeRepartizat = $state<Booking | null>(null);
 	let pozitiiEveniment = $state<string[]>([]);
 	let pozitiaSelectata = $state('');
-	let loadingPozitii = $state(false);
 	let savingRepartizare = $state(false);
 
 	let evenimentCurent = $state<any>({
@@ -172,16 +171,22 @@
 		}
 	}
 
-	async function deschideRepartizare(booking: Booking) {
+	function deschideRepartizare(booking: Booking) {
 		bookingDeRepartizat = booking;
 		pozitiaSelectata = booking.selected_position || '';
-		pozitiiEveniment = [];
-		if (booking.event_id) {
-			loadingPozitii = true;
-			const { data } = await supabase.from('events').select('positions').eq('id', booking.event_id).single();
-			pozitiiEveniment = data?.positions || [];
-			loadingPozitii = false;
-		}
+
+		const ev = evenimente.find(e => e.id === booking.event_id);
+		const toatePozitiile: string[] = ev?.positions || [];
+
+		// Exclude pozitiile deja ocupate de bookings confirmate (altele decat cel curent)
+		const ocupate = new Set(
+			rezervari
+				.filter(r => r.event_id === booking.event_id && r.status === 'confirmat' && r.id !== booking.id)
+				.map(r => r.selected_position)
+				.filter((p): p is string => !!p)
+		);
+
+		pozitiiEveniment = toatePozitiile.filter(p => !ocupate.has(p));
 		showRepartizareModal = true;
 	}
 
@@ -519,9 +524,7 @@
 				{/if}
 			</div>
 
-			{#if loadingPozitii}
-				<p style="color:#666; text-align:center;">Se încarcă pozițiile...</p>
-			{:else if pozitiiEveniment.length > 0}
+			{#if pozitiiEveniment.length > 0}
 				<div class="camp">
 					<label>Selectează Poziția</label>
 					<select bind:value={pozitiaSelectata} style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border); font-size:1.4rem;">
