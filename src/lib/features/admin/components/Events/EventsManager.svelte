@@ -19,6 +19,14 @@
 	let incarcareFoto = $state(false);
 	let saving = $state(false);
 
+	// --- REPARTIZARE STATE ---
+	let showRepartizareModal = $state(false);
+	let bookingDeRepartizat = $state<Booking | null>(null);
+	let pozitiiEveniment = $state<string[]>([]);
+	let pozitiaSelectata = $state('');
+	let loadingPozitii = $state(false);
+	let savingRepartizare = $state(false);
+
 	let evenimentCurent = $state<any>({
 		id: '',
 		title: '',
@@ -164,6 +172,38 @@
 		}
 	}
 
+	async function deschideRepartizare(booking: Booking) {
+		bookingDeRepartizat = booking;
+		pozitiaSelectata = booking.selected_position || '';
+		pozitiiEveniment = [];
+		if (booking.event_id) {
+			loadingPozitii = true;
+			const { data } = await supabase.from('events').select('positions').eq('id', booking.event_id).single();
+			pozitiiEveniment = data?.positions || [];
+			loadingPozitii = false;
+		}
+		showRepartizareModal = true;
+	}
+
+	async function salveazaRepartizare() {
+		if (!bookingDeRepartizat || !pozitiaSelectata) return;
+		savingRepartizare = true;
+		try {
+			const { error } = await supabase
+				.from('bookings')
+				.update({ selected_position: pozitiaSelectata, status: 'confirmat' })
+				.eq('id', bookingDeRepartizat.id);
+			if (error) throw error;
+			showRepartizareModal = false;
+			await refreshBookings();
+			showToast('success', `${bookingDeRepartizat.nume_client} repartizat pe poziția "${pozitiaSelectata}".`);
+		} catch (err: any) {
+			showToast('error', err.message);
+		} finally {
+			savingRepartizare = false;
+		}
+	}
+
 	function convertesteInEveniment(booking: any) {
 		evenimentCurent = {
 			title: `${booking.activity_title} - ${booking.nume_client}`,
@@ -247,21 +287,40 @@
 	<div class="table-scroll" style="background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
 		{#if subSectiuneEv === 'cereri'}
 			<table>
-				<thead><tr><th>Client</th><th>Activitate</th><th>Telefon</th><th>Data Cererii</th><th>Acțiuni</th></tr></thead>
+				<thead><tr><th>Client</th><th>Activitate</th><th>Telefon</th><th>Eveniment</th><th>Poziție</th><th>Data Cererii</th><th>Acțiuni</th></tr></thead>
 				<tbody>
 					{#each rezervari.filter(r => r.status === 'nou' || !r.status) as r}
+						{@const evAsociat = r.event_id ? evenimente.find(e => e.id === r.event_id) : null}
 						<tr>
 							<td><strong>{r.nume_client}</strong></td>
 							<td>{r.activity_title}</td>
 							<td>{r.telefon}</td>
+							<td>
+								{#if evAsociat}
+									<span style="font-size:1.2rem; color:#2980b9; font-weight:600;">📅 {evAsociat.title}</span>
+								{:else}
+									<span style="color:#bbb">—</span>
+								{/if}
+							</td>
+							<td>
+								{#if r.selected_position}
+									<span class="badge-status status-confirmat">{r.selected_position}</span>
+								{:else}
+									<span style="color:#bbb">—</span>
+								{/if}
+							</td>
 							<td>{new Date(r.created_at).toLocaleDateString('ro-RO')}</td>
 							<td style="display:flex; gap:0.5rem;">
-								<button class="btn-icon" style="background:#e67e22; color:white; border:none; padding:0.6rem 1.2rem; font-size:1.2rem;" onclick={() => convertesteInEveniment(r)} title="Convertește în Eveniment">🚀</button>
+								{#if r.event_id}
+									<button class="btn-icon" style="background:#2980b9; color:white; border:none; padding:0.6rem 1.2rem;" onclick={() => deschideRepartizare(r)} title="Repartizează poziție">👤</button>
+								{:else}
+									<button class="btn-icon" style="background:#e67e22; color:white; border:none; padding:0.6rem 1.2rem; font-size:1.2rem;" onclick={() => convertesteInEveniment(r)} title="Convertește în Eveniment">🚀</button>
+								{/if}
 								<button class="btn-icon btn-sterge" onclick={() => stergeElement('bookings', r.id)}>🗑️</button>
 							</td>
 						</tr>
 					{:else}
-						<tr><td colspan="5" style="text-align:center; padding: 4rem; color: #999;">Nicio cerere în așteptare.</td></tr>
+						<tr><td colspan="7" style="text-align:center; padding: 4rem; color: #999;">Nicio cerere în așteptare.</td></tr>
 					{/each}
 				</tbody>
 			</table>
@@ -378,6 +437,50 @@
 			<div style="display: flex; gap: 1rem;">
 				<button class="buton-iesire" style="flex: 1" onclick={() => cropImage = null}>Anulează</button>
 				<button class="buton-primar" style="flex: 2" onclick={handleFinalizeCrop} disabled={incarcareFoto}>{incarcareFoto ? 'Se salvează...' : 'Finalizează'}</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- MODAL REPARTIZARE -->
+{#if showRepartizareModal && bookingDeRepartizat}
+	{@const evAsociatModal = bookingDeRepartizat.event_id ? evenimente.find(e => e.id === bookingDeRepartizat!.event_id) : null}
+	<div class="modal-overlay">
+		<div class="login-card" style="max-width: 50rem;">
+			<h2>👤 Repartizare Poziție</h2>
+			<div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--primary-tint); border-radius: 9px; display: flex; flex-direction: column; gap: 0.6rem;">
+				<div><strong>Client:</strong> {bookingDeRepartizat.nume_client}</div>
+				<div><strong>Telefon:</strong> {bookingDeRepartizat.telefon}</div>
+				<div><strong>Activitate:</strong> {bookingDeRepartizat.activity_title}</div>
+				{#if evAsociatModal}
+					<div><strong>Eveniment:</strong> {evAsociatModal.title}</div>
+				{/if}
+			</div>
+
+			{#if loadingPozitii}
+				<p style="color:#666; text-align:center;">Se încarcă pozițiile...</p>
+			{:else if pozitiiEveniment.length > 0}
+				<div class="camp">
+					<label>Selectează Poziția</label>
+					<select bind:value={pozitiaSelectata} style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border); font-size:1.4rem;">
+						<option value="">-- alege poziția --</option>
+						{#each pozitiiEveniment as poz}
+							<option value={poz}>{poz}</option>
+						{/each}
+					</select>
+				</div>
+			{:else}
+				<div style="background:#fff3cd; padding:1.5rem; border-radius:9px; margin-bottom:1.5rem;">
+					<p style="margin:0 0 0.8rem; font-size:1.3rem; color:#856404;">Evenimentul nu are poziții definite. Introdu manual:</p>
+					<input bind:value={pozitiaSelectata} placeholder="ex: Atacant, Medic, Apărător..." style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border); font-size:1.4rem; box-sizing:border-box;" />
+				</div>
+			{/if}
+
+			<div style="display:flex; gap:1rem; margin-top:2rem;">
+				<button type="button" class="buton-iesire" style="flex:1" onclick={() => showRepartizareModal = false}>Anulează</button>
+				<button type="button" class="buton-primar" style="flex:2" disabled={savingRepartizare || !pozitiaSelectata} onclick={salveazaRepartizare}>
+					{savingRepartizare ? 'Se salvează...' : '✅ Confirmă Repartizare'}
+				</button>
 			</div>
 		</div>
 	</div>
