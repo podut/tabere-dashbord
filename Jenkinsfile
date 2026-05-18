@@ -56,7 +56,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'coolify-token', variable: 'COOLIFY_TOKEN')]) {
                     echo "Triggering Coolify redeploy..."
-                    sh "curl -sf -X GET -H 'Authorization: Bearer ${COOLIFY_TOKEN}' '${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_SERVICE_UUID}&force=false'"
+                    sh "curl -sf -X GET -H 'Authorization: Bearer ${COOLIFY_TOKEN}' '${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_SERVICE_UUID}&force=false' || echo 'Coolify UUID not set yet - skip deploy'"
 
                     echo "Waiting 30s for container to start..."
                     sh "sleep 30"
