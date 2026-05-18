@@ -194,6 +194,20 @@
 				.update({ selected_position: pozitiaSelectata, status: 'confirmat' })
 				.eq('id', bookingDeRepartizat.id);
 			if (error) throw error;
+
+			if (bookingDeRepartizat.user_id) {
+				const evTitle = evenimente.find(e => e.id === bookingDeRepartizat!.event_id)?.title ?? 'eveniment';
+				await supabase.from('notifications').insert({
+					user_id: bookingDeRepartizat.user_id,
+					title: 'Ai fost repartizat! 🎯',
+					body: `Ești repartizat pe poziția "${pozitiaSelectata}" la ${evTitle}. Ne vedem pe teren!`,
+					target_event_id: bookingDeRepartizat.event_id,
+					target_type: 'event',
+					scheduled_at: new Date().toISOString(),
+					status: 'trimis'
+				});
+			}
+
 			showRepartizareModal = false;
 			await refreshBookings();
 			showToast('success', `${bookingDeRepartizat.nume_client} repartizat pe poziția "${pozitiaSelectata}".`);
@@ -276,12 +290,13 @@
 
 <div class="events-manager">
 	<div class="actiuni-pagina" style="display:flex; justify-content: flex-end; gap: 1rem; margin-bottom: 2rem;">
-		{#if subSectiuneEv !== 'cereri'}
+		{#if subSectiuneEv === 'active' || subSectiuneEv === 'finished'}
 			<button class="buton-primar" onclick={() => deschideEveniment()}>+ Eveniment Nou</button>
 		{/if}
 		<button class="tab-item" class:activ={subSectiuneEv === 'active'} onclick={() => (subSectiuneEv = 'active')}>🔥 Active</button>
 		<button class="tab-item" class:activ={subSectiuneEv === 'finished'} onclick={() => (subSectiuneEv = 'finished')}>🏁 Finalizate ({evenimente.filter(e=>e.status==='finished').length})</button>
-		<button class="tab-item" class:activ={subSectiuneEv === 'cereri'} onclick={() => (subSectiuneEv = 'cereri')}>📥 Cereri ({rezervari.length})</button>
+		<button class="tab-item" class:activ={subSectiuneEv === 'cereri'} onclick={() => (subSectiuneEv = 'cereri')}>📥 Cereri ({rezervari.filter(r => r.status === 'nou' || !r.status).length})</button>
+		<button class="tab-item" class:activ={subSectiuneEv === 'confirmati'} onclick={() => (subSectiuneEv = 'confirmati')}>👥 Confirmați ({rezervari.filter(r => r.status === 'confirmat').length})</button>
 	</div>
 
 	<div class="table-scroll" style="background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
@@ -324,6 +339,53 @@
 					{/each}
 				</tbody>
 			</table>
+		{:else if subSectiuneEv === 'confirmati'}
+			{@const confirmati = rezervari.filter(r => r.status === 'confirmat')}
+			{#if confirmati.length === 0}
+				<div style="text-align:center; padding: 4rem; color: #999;">Niciun participant confirmat încă.</div>
+			{:else}
+				{@const eventIds = [...new Set(confirmati.map(r => r.event_id).filter(Boolean))]}
+				{#each eventIds as eid}
+					{@const evGrup = evenimente.find(e => e.id === eid)}
+					{@const participanti = confirmati.filter(r => r.event_id === eid)}
+					<div style="margin-bottom: 0.5rem;">
+						<div style="display:flex; align-items:center; justify-content:space-between; padding: 1.2rem 2rem; background: var(--primary-tint); border-bottom: 1px solid var(--border);">
+							<span style="font-weight:700; font-size:1.5rem;">📅 {evGrup?.title ?? 'Eveniment necunoscut'}</span>
+							<span style="font-size:1.3rem; color:#666;">{evGrup ? new Date(evGrup.date).toLocaleDateString('ro-RO') : ''} · <strong>{participanti.length}</strong> participanți</span>
+						</div>
+						<table>
+							<thead><tr><th>Participant</th><th>Telefon</th><th>Poziție</th><th>Activitate</th></tr></thead>
+							<tbody>
+								{#each participanti as r}
+									<tr>
+										<td><strong>{r.nume_client}</strong></td>
+										<td>{r.telefon}</td>
+										<td><span class="badge-status status-confirmat">{r.selected_position || '—'}</span></td>
+										<td style="color:#666;">{r.activity_title}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/each}
+				{#if confirmati.filter(r => !r.event_id).length > 0}
+					<div style="margin-top: 0.5rem;">
+						<div style="padding: 1.2rem 2rem; background: #f8f9fa; border-bottom: 1px solid var(--border); font-weight:700; font-size:1.5rem;">🔧 Servicii confirmate</div>
+						<table>
+							<thead><tr><th>Client</th><th>Telefon</th><th>Activitate</th></tr></thead>
+							<tbody>
+								{#each confirmati.filter(r => !r.event_id) as r}
+									<tr>
+										<td><strong>{r.nume_client}</strong></td>
+										<td>{r.telefon}</td>
+										<td>{r.activity_title}</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{/if}
+			{/if}
 		{:else}
 			<table>
 				<thead><tr><th>Meci</th><th>Dată</th><th>Preț</th><th>Status</th><th>Acțiuni</th></tr></thead>
