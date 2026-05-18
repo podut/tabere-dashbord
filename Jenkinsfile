@@ -10,7 +10,7 @@ pipeline {
         DOCKER_IMAGE           = 'podutpetru/airsoft-admin'
         IMAGE_TAG              = "${BUILD_NUMBER}"
         COOLIFY_URL            = 'https://coolify.petrupodut.dev'
-        COOLIFY_SERVICE_UUID   = 'SETEAZA_UUID_DIN_COOLIFY'
+        COOLIFY_SERVICE_UUID   = 'zdgrt62a84a8rc1xcm282eoa'
         PUBLIC_SUPABASE_URL    = 'https://supabase.petrupodut.dev'
         PUBLIC_SUPABASE_KEY    = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc0ODM2NTMyMCwiZXhwIjo0OTA0MDM4OTIwLCJyb2xlIjoiYW5vbiJ9.P_bRRo_PNTusZ2ydGnTxgSfsyxjNRmbvtYjN6JjF4bg'
         PUBLIC_STORAGE_BUCKET  = 'assets'
@@ -56,7 +56,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'coolify-token', variable: 'COOLIFY_TOKEN')]) {
                     echo "Triggering Coolify redeploy..."
-                    sh "curl -sf -X GET -H 'Authorization: Bearer ${COOLIFY_TOKEN}' '${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_SERVICE_UUID}&force=false' || echo 'Coolify UUID not set yet - skip deploy'"
+                    sh "curl -sf -X GET -H 'Authorization: Bearer ${COOLIFY_TOKEN}' '${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_SERVICE_UUID}&force=false'"
 
                     echo "Waiting 30s for container to start..."
                     sh "sleep 30"
