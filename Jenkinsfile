@@ -2,10 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE    = 'podutpetru/airsoft-admin'
-        DOCKER_TAG      = "${BUILD_NUMBER}"
-        SUPABASE_URL    = 'https://supabase.petrupodut.dev'
-        STORAGE_BUCKET  = 'assets'
+        DOCKER_IMAGE   = 'podutpetru/airsoft-admin'
+        DOCKER_TAG     = "${BUILD_NUMBER}"
+        SUPABASE_URL   = 'https://supabase.petrupodut.dev'
+        SUPABASE_KEY   = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc0ODM2NTMyMCwiZXhwIjo0OTA0MDM4OTIwLCJyb2xlIjoiYW5vbiJ9.P_bRRo_PNTusZ2ydGnTxgSfsyxjNRmbvtYjN6JjF4bg'
+        STORAGE_BUCKET = 'assets'
+        COOLIFY_URL    = 'http://138.2.172.101:8000'
     }
 
     stages {
@@ -18,24 +20,22 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                withCredentials([string(credentialsId: 'SUPABASE_ANON_KEY', variable: 'ANON_KEY')]) {
-                    sh """
-                        docker build \\
-                            --build-arg PUBLIC_SUPABASE_URL=${SUPABASE_URL} \\
-                            --build-arg PUBLIC_SUPABASE_ANON_KEY=${ANON_KEY} \\
-                            --build-arg PUBLIC_STORAGE_BUCKET=${STORAGE_BUCKET} \\
-                            -t ${DOCKER_IMAGE}:${DOCKER_TAG} \\
-                            -t ${DOCKER_IMAGE}:latest \\
-                            .
-                    """
-                }
+                sh """
+                    docker build \\
+                        --build-arg PUBLIC_SUPABASE_URL=${SUPABASE_URL} \\
+                        --build-arg PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY} \\
+                        --build-arg PUBLIC_STORAGE_BUCKET=${STORAGE_BUCKET} \\
+                        -t ${DOCKER_IMAGE}:${DOCKER_TAG} \\
+                        -t ${DOCKER_IMAGE}:latest \\
+                        .
+                """
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'DOCKERHUB_CREDENTIALS',
+                    credentialsId: 'dockerhubrepo',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
@@ -51,8 +51,12 @@ pipeline {
 
         stage('Deploy via Coolify') {
             steps {
-                withCredentials([string(credentialsId: 'COOLIFY_WEBHOOK', variable: 'WEBHOOK_URL')]) {
-                    sh "curl -sf -X GET \"\${WEBHOOK_URL}\" || echo 'Coolify webhook called'"
+                withCredentials([string(credentialsId: 'coolify-token', variable: 'COOLIFY_TOKEN')]) {
+                    sh """
+                        curl -sf -X GET "${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_APP_UUID}&force=false" \\
+                            -H "Authorization: Bearer \${COOLIFY_TOKEN}" \\
+                            || echo 'Deploy triggered'
+                    """
                 }
             }
         }
