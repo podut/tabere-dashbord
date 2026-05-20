@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { supabase, STORAGE_BUCKET } from '$lib/supabase';
+	import Cropper from 'svelte-easy-crop';
+	import { getCroppedImg } from '$lib/utils/image';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { Service, Partner } from '$lib/types';
 
@@ -28,17 +30,23 @@
 	let serviciuCurent = $state<any>(serviciuGol());
 	let partenerCurent = $state<any>({ id: '', name: '', website: '', image_url: '', order: 0 });
 
-	// Inputuri temporare pentru array-uri
-	let inputGallery = $state('');
+	// Inputuri temporare pentru includes/positions
 	let inputIncludes = $state('');
 	let inputPositions = $state('');
+
+	// Crop imagine principală
+	let cropImage = $state<string | null>(null);
+	let crop = $state({ x: 0, y: 0 });
+	let zoom = $state(1);
+	let croppedAreaPixels = $state<any>(null);
+	let incarcareFoto = $state(false);
+	let incarcareGalerie = $state(false);
 
 	function deschideServiciu(s: any = null) {
 		editMode = !!s;
 		serviciuCurent = s
 			? { ...s, gallery: [...(s.gallery ?? [])], includes: [...(s.includes ?? [])], positions: [...(s.positions ?? [])] }
 			: serviciuGol();
-		inputGallery = '';
 		inputIncludes = '';
 		inputPositions = '';
 		showServModal = true;
@@ -50,11 +58,59 @@
 		showPartnerModal = true;
 	}
 
-	function adaugaInArray(camp: 'gallery' | 'includes' | 'positions', valoare: string) {
+	function onFotoSelectata(e: Event) {
+		const target = e.target as HTMLInputElement;
+		if (target.files && target.files.length > 0) {
+			const reader = new FileReader();
+			reader.onload = () => { cropImage = reader.result as string; };
+			reader.readAsDataURL(target.files[0]);
+			target.value = '';
+		}
+	}
+
+	async function finalizeazaCrop() {
+		if (!cropImage || !croppedAreaPixels) return;
+		incarcareFoto = true;
+		try {
+			const blob = await getCroppedImg(cropImage, croppedAreaPixels);
+			if (!blob) throw new Error('Eroare la procesare.');
+			const fileName = `services/${Date.now()}.jpg`;
+			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, blob);
+			if (uploadError) throw uploadError;
+			const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+			serviciuCurent.image_url = data.publicUrl;
+			cropImage = null;
+		} catch (err: any) {
+			showToast('error', err.message);
+		} finally {
+			incarcareFoto = false;
+		}
+	}
+
+	async function onFotoGalerieSelectata(e: Event) {
+		const target = e.target as HTMLInputElement;
+		if (!target.files || target.files.length === 0) return;
+		incarcareGalerie = true;
+		try {
+			for (const file of Array.from(target.files)) {
+				const fileName = `services/gallery/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+				const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, file);
+				if (uploadError) throw uploadError;
+				const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+				serviciuCurent.gallery = [...serviciuCurent.gallery, data.publicUrl];
+			}
+		} catch (err: any) {
+			showToast('error', err.message);
+		} finally {
+			incarcareGalerie = false;
+			target.value = '';
+		}
+	}
+
+	function adaugaInArray(camp: 'includes' | 'positions', valoare: string) {
 		const v = valoare.trim();
 		if (!v) return;
 		serviciuCurent[camp] = [...serviciuCurent[camp], v];
-		if (camp === 'gallery') inputGallery = '';
 		if (camp === 'includes') inputIncludes = '';
 		if (camp === 'positions') inputPositions = '';
 	}
@@ -63,7 +119,7 @@
 		serviciuCurent[camp] = serviciuCurent[camp].filter((_: any, i: number) => i !== idx);
 	}
 
-	function handleArrayKeydown(e: KeyboardEvent, camp: 'gallery' | 'includes' | 'positions', valoare: string) {
+	function handleArrayKeydown(e: KeyboardEvent, camp: 'includes' | 'positions', valoare: string) {
 		if (e.key === 'Enter') { e.preventDefault(); adaugaInArray(camp, valoare); }
 	}
 
@@ -246,22 +302,30 @@
 				<div class="sectiune-form">
 					<div class="sectiune-titlu">Media</div>
 					<div class="camp">
-						<label>URL Imagine principală</label>
-						<input bind:value={serviciuCurent.image_url} placeholder="https://..." />
-						{#if serviciuCurent.image_url}
-							<img src={serviciuCurent.image_url} alt="preview" class="img-preview" />
-						{/if}
+						<label>Imagine principală</label>
+						<label class="upload-zone">
+							<input type="file" accept="image/*" onchange={onFotoSelectata} style="display:none" />
+							{#if serviciuCurent.image_url}
+								<img src={serviciuCurent.image_url} alt="preview" class="img-preview-full" />
+								<span class="upload-overlay">Schimbă imaginea</span>
+							{:else}
+								<div class="upload-placeholder">
+									<span class="upload-icon">📷</span>
+									<span>Apasă pentru a încărca imaginea principală</span>
+									<small>16:9 recomandat</small>
+								</div>
+							{/if}
+						</label>
 					</div>
 					<div class="camp">
-						<label>Galerie imagini</label>
-						<div class="array-input">
-							<input
-								bind:value={inputGallery}
-								placeholder="URL imagine, apasă Enter sau +"
-								onkeydown={(e) => handleArrayKeydown(e, 'gallery', inputGallery)}
-							/>
-							<button type="button" class="btn-adauga" onclick={() => adaugaInArray('gallery', inputGallery)}>+</button>
-						</div>
+						<label>Galerie imagini
+							{#if incarcareGalerie}<span class="hint"> — se încarcă...</span>{/if}
+						</label>
+						<label class="upload-zone upload-zone-sm">
+							<input type="file" accept="image/*" multiple onchange={onFotoGalerieSelectata} style="display:none" />
+							<span class="upload-icon">🖼️</span>
+							<span>Adaugă imagini în galerie (multiple)</span>
+						</label>
 						<div class="chips">
 							{#each serviciuCurent.gallery as url, i}
 								<span class="chip chip-img">
@@ -327,6 +391,23 @@
 	</div>
 {/if}
 
+{#if cropImage}
+	<div class="modal-overlay" style="z-index: 2000;">
+		<div class="login-card" style="max-width: 90rem; height: 80vh; display: flex; flex-direction: column;">
+			<h2>Decupează Imaginea</h2>
+			<div style="flex: 1; position: relative; background: #222; border-radius: 12px; overflow: hidden; margin-bottom: 2rem;">
+				<Cropper image={cropImage} bind:crop bind:zoom aspect={16/9} oncropcomplete={({ pixels }) => (croppedAreaPixels = pixels)} />
+			</div>
+			<div style="display: flex; gap: 1rem;">
+				<button class="buton-iesire" style="flex: 1" onclick={() => cropImage = null}>Anulează</button>
+				<button class="buton-primar" style="flex: 2" onclick={finalizeazaCrop} disabled={incarcareFoto}>
+					{incarcareFoto ? 'Se salvează...' : 'Finalizează'}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 {#if showPartnerModal}
 	<div class="modal-overlay"><div class="login-card" style="max-width: 50rem;">
         <h2>{editMode ? 'Editează' : 'Adaugă'} Partener</h2>
@@ -379,6 +460,15 @@
 	.chip-img { padding: 0.3rem 0.8rem; }
 	.chip-img img { height: 2.4rem; width: 3.6rem; object-fit: cover; border-radius: 3px; }
 
-	/* Preview imagine */
-	.img-preview { display: block; margin-top: 1rem; max-height: 12rem; border-radius: 8px; border: 1px solid var(--border); }
+	/* Upload zone */
+	.upload-zone { display: block; position: relative; border: 2px dashed var(--border); border-radius: 10px; cursor: pointer; overflow: hidden; transition: border-color 0.2s; }
+	.upload-zone:hover { border-color: var(--primary); }
+	.upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.4rem; color: #999; font-size: 1.4rem; text-align: center; }
+	.upload-placeholder small { font-size: 1.1rem; color: #bbb; }
+	.upload-icon { font-size: 2.8rem; }
+	.upload-zone-sm .upload-placeholder, .upload-zone-sm { padding: 1.4rem; }
+	.upload-zone-sm { display: flex; align-items: center; gap: 1rem; font-size: 1.3rem; color: #888; }
+	.img-preview-full { display: block; width: 100%; max-height: 18rem; object-fit: cover; }
+	.upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 600; opacity: 0; transition: opacity 0.2s; }
+	.upload-zone:hover .upload-overlay { opacity: 1; }
 </style>
