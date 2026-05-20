@@ -88,13 +88,10 @@
 </script>
 
 <div class="site-content-manager">
-	<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; flex-wrap:wrap; gap:1rem;">
-		<p style="color:#666; font-size:1.3rem;">Gestionare conținut dinamic aplicație. Identificarea se face prin <code>section_id</code>.</p>
-		<button class="buton-primar" onclick={() => deschideSiteSectiune()}>+ Secțiune Nouă</button>
-	</div>
+	<p style="color:#666; font-size:1.3rem; margin-bottom:2rem;">Editează imaginile și textele principale ale aplicației.</p>
 
 	<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 2rem;">
-		{#each continutSite as sec}
+		{#each continutSite.filter((s: any) => ['home_hero', 'services_hero', 'events_hero'].includes(s.section_id)) as sec}
 			{@const previewImg = sec.content?.image || sec.images?.[0] || null}
 			<div style="background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
 				{#if previewImg}
@@ -106,14 +103,13 @@
 					<code style="background:var(--primary-tint); color:var(--primary); padding:0.2rem 0.6rem; border-radius:4px; font-size:1.1rem;">{sec.section_id}</code>
 					<h4 style="margin: 0.8rem 0 0.4rem; font-size:1.6rem;">{sec.title || '(fără titlu)'}</h4>
 					<p style="font-size:1.2rem; color:#888; margin-bottom:1.5rem;">{sec.description?.slice(0, 100) || 'Fără descriere...'}</p>
-					
+
 					<div style="display:flex; gap:0.5rem;">
 						<button class="btn-icon" style="flex:1;" onclick={() => deschideSiteSectiune(sec)}>✏️</button>
 						<label class="btn-icon" style="flex:1; background:#27ae60; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer;">
 							📷
 							<input type="file" style="display:none;" onchange={(e) => onFileSelected(e, sec.section_id)} />
 						</label>
-						<button class="btn-icon btn-sterge" onclick={() => stergeSiteSectiune(sec.section_id)}>🗑️</button>
 					</div>
 				</div>
 			</div>
