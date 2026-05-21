@@ -355,7 +355,7 @@
 
 <style>
 	.events-manager { display: flex; flex-direction: column; gap: 2rem; }
-	.bara-actiuni { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+	.bara-actiuni { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; flex-wrap: wrap; }
 	.buton-nou { display: flex; align-items: center; gap: 0.6rem; }
 	.tabs { display: flex; gap: 0.4rem; background: #f1f3f5; padding: 0.4rem; border-radius: 12px; }
 	.tab-item {

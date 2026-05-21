@@ -32,7 +32,7 @@
 			<div class="tabel-container table-scroll">
 				<table>
 					<thead>
-						<tr><th>Participant</th><th>Telefon</th><th>Poziție</th><th>Activitate</th></tr>
+						<tr><th>Participant</th><th>Telefon</th><th>Poziție</th></tr>
 					</thead>
 					<tbody>
 						{#each participanti as r}
@@ -40,7 +40,6 @@
 								<td><strong>{r.nume_client}</strong></td>
 								<td>{r.telefon}</td>
 								<td><span class="badge-status status-confirmat">{r.selected_position || '—'}</span></td>
-								<td class="text-gri">{r.activity_title}</td>
 							</tr>
 						{/each}
 					</tbody>
