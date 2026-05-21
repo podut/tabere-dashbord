@@ -156,6 +156,8 @@ tr:hover td { background-color: #fffaf7; }
 .badge-status.status-active { background: #d3f9d8; color: #2b8a3e; }
 .badge-status.status-finished { background: #f1f3f5; color: #495057; }
 .badge-status.status-nou { background: #fff4e6; color: #d9480f; }
+.badge-status.status-pending { background: #e7f5ff; color: #1864ab; }
+.badge-status.status-confirmat { background: #d3f9d8; color: #2b8a3e; }
 .badge-status.status-admin { background: #fff4e6; color: #d9480f; }
 .badge-status.status-user { background: #e7f5ff; color: #1971c2; }
 

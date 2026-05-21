@@ -1,25 +1,30 @@
 <script lang="ts">
 	import { supabase, STORAGE_BUCKET } from '$lib/supabase';
-	import Cropper from 'svelte-easy-crop';
-	import { getCroppedImg } from '$lib/utils/image';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { EventRow, Booking } from '$lib/types';
 
-	let { evenimente = $bindable([]), rezervari = $bindable([]), refreshEvents, refreshBookings }: { 
-		evenimente: EventRow[], 
-		rezervari: Booking[],
-		refreshEvents: () => Promise<void>,
-		refreshBookings: () => Promise<void>
+	import EventsTab from './EventsTab.svelte';
+	import CereriTab from './CereriTab.svelte';
+	import ConfirmatiTab from './ConfirmatiTab.svelte';
+	import EventModal from './EventModal.svelte';
+	import GalerieModal from './GalerieModal.svelte';
+	import CropModal from './CropModal.svelte';
+	import RepartizareModal from './RepartizareModal.svelte';
+
+	let { evenimente = $bindable([]), rezervari = $bindable([]), refreshEvents, refreshBookings }: {
+		evenimente: EventRow[];
+		rezervari: Booking[];
+		refreshEvents: () => Promise<void>;
+		refreshBookings: () => Promise<void>;
 	} = $props();
 
-	let subSectiuneEv = $state('active'); // active | finished | cereri
+	type Tab = 'active' | 'finished' | 'cereri' | 'confirmati';
+	let tabActiv = $state<Tab>('active');
 	let showEvModal = $state(false);
 	let showEvGalModal = $state(false);
 	let editMode = $state(false);
-	let incarcareFoto = $state(false);
 	let saving = $state(false);
 
-	// --- REPARTIZARE STATE ---
 	let showRepartizareModal = $state(false);
 	let bookingDeRepartizat = $state<Booking | null>(null);
 	let pozitiiEveniment = $state<string[]>([]);
@@ -27,54 +32,34 @@
 	let savingRepartizare = $state(false);
 
 	let evenimentCurent = $state<any>({
-		id: '',
-		title: '',
-		type: 'Milsim',
-		description: '',
+		id: '', title: '', type: 'Milsim', description: '',
 		date: new Date().toISOString().slice(0, 10),
-		start_time: '10:00',
-		duration: '6 ore',
-		location: 'Baza HTCMX Airsoft',
-		price: 50,
-		currency: 'RON',
-		status: 'active',
-		is_public: true,
-		max_participants: 30,
-		positions: [],
-		image_url: '',
-		gallery: [],
-		origin_booking_id: ''
+		start_time: '10:00', duration: '6 ore',
+		location: 'Baza HTCMX Airsoft', price: 50, currency: 'RON',
+		status: 'active', is_public: true, max_participants: 30,
+		positions: [], image_url: '', gallery: [], origin_booking_id: ''
 	});
 
-	// --- CROP STATE ---
 	let cropImage = $state<string | null>(null);
-	let crop = $state({ x: 0, y: 0 });
-	let zoom = $state(1);
-	let croppedAreaPixels = $state<any>(null);
 	let cropContext = $state<string | null>(null);
+	let incarcareFoto = $state(false);
 
-	function deschideEveniment(ev: any = null) {
+	const numarCereri = $derived(rezervari.filter(r => r.status === 'nou' || !r.status).length);
+	const numarConfirmati = $derived(rezervari.filter(r => r.status === 'confirmat').length);
+	const numarFinalizate = $derived(evenimente.filter(e => e.status === 'finished').length);
+
+	function deschideEveniment(ev: EventRow | null = null) {
 		editMode = !!ev;
 		evenimentCurent = ev
 			? { ...ev, date: ev.date?.slice(0, 10), positions: ev.positions || [], gallery: ev.gallery || [] }
 			: {
-					title: '',
-					type: 'Milsim',
-					description: '',
-					date: new Date().toISOString().slice(0, 10),
-					start_time: '10:00',
-					duration: '6 ore',
-					location: 'Baza HTCMX Airsoft',
-					price: 50,
-					currency: 'RON',
-					status: 'active',
-					is_public: true,
-					max_participants: 30,
-					positions: [],
-					image_url: '',
-					gallery: [],
-					origin_booking_id: ''
-				};
+				title: '', type: 'Milsim', description: '',
+				date: new Date().toISOString().slice(0, 10),
+				start_time: '10:00', duration: '6 ore',
+				location: 'Baza HTCMX Airsoft', price: 50, currency: 'RON',
+				status: 'active', is_public: true, max_participants: 30,
+				positions: [], image_url: '', gallery: [], origin_booking_id: ''
+			};
 		showEvModal = true;
 	}
 
@@ -85,7 +70,7 @@
 			const dateStr = evenimentCurent.date
 				? evenimentCurent.date.slice(0, 10) + 'T12:00:00'
 				: new Date().toISOString();
-			
+
 			const payload = {
 				title: evenimentCurent.title,
 				type: evenimentCurent.type || '',
@@ -110,15 +95,15 @@
 				? await supabase.from('events').update(payload).eq('id', evenimentCurent.id)
 				: await supabase.from('events').insert([payload]);
 
-			if (!error) {
-				if (!editMode && evenimentCurent.origin_booking_id) {
-					await supabase.from('bookings').update({ status: 'confirmat' }).eq('id', evenimentCurent.origin_booking_id);
-				}
-				showEvModal = false;
-				await refreshEvents();
-				await refreshBookings();
-				showToast('success', editMode ? 'Eveniment actualizat.' : 'Eveniment creat.');
-			} else throw error;
+			if (error) throw error;
+
+			if (!editMode && evenimentCurent.origin_booking_id) {
+				await supabase.from('bookings').update({ status: 'confirmat' }).eq('id', evenimentCurent.origin_booking_id);
+			}
+			showEvModal = false;
+			await refreshEvents();
+			await refreshBookings();
+			showToast('success', editMode ? 'Eveniment actualizat.' : 'Eveniment creat.');
 		} catch (err: any) {
 			showToast('error', err.message);
 		} finally {
@@ -135,57 +120,44 @@
 		}))) return;
 
 		const { error } = await supabase.from('events').update({ status: 'finished', active: false }).eq('id', id);
-		if (!error) {
-			await refreshEvents();
-			showToast('success', 'Eveniment finalizat.');
-		}
+		if (!error) { await refreshEvents(); showToast('success', 'Eveniment finalizat.'); }
 	}
 
-	async function stergeEveniment(ev: any) {
-		if (await confirmDialog({
+	async function stergeEveniment(ev: EventRow) {
+		if (!(await confirmDialog({
 			title: 'Ștergi definitiv evenimentul?',
 			message: `"${ev.title}" va fi șters permanent.`,
 			confirmLabel: 'Șterge definitiv',
 			danger: true
-		})) {
-			const { error } = await supabase.from('events').delete().eq('id', ev.id);
-			if (!error) {
-				await refreshEvents();
-				showToast('success', 'Eveniment șters.');
-			}
-		}
+		}))) return;
+
+		const { error } = await supabase.from('events').delete().eq('id', ev.id);
+		if (!error) { await refreshEvents(); showToast('success', 'Eveniment șters.'); }
 	}
 
-	async function stergeElement(tabela: string, id: string) {
-		if (await confirmDialog({
+	async function stergeBooking(id: string) {
+		if (!(await confirmDialog({
 			title: 'Confirmi ștergerea?',
 			message: 'Înregistrarea va fi ștearsă definitiv.',
 			confirmLabel: 'Șterge',
 			danger: true
-		})) {
-			const { error } = await supabase.from(tabela as any).delete().eq('id', id);
-			if (!error) {
-				if (tabela === 'bookings') await refreshBookings();
-				showToast('success', 'Sters.');
-			}
-		}
+		}))) return;
+
+		const { error } = await supabase.from('bookings').delete().eq('id', id);
+		if (!error) { await refreshBookings(); showToast('success', 'Șters.'); }
 	}
 
 	function deschideRepartizare(booking: Booking) {
 		bookingDeRepartizat = booking;
 		pozitiaSelectata = booking.selected_position || '';
-
 		const ev = evenimente.find(e => e.id === booking.event_id);
-		const toatePozitiile: string[] = ev?.positions || [];
-
-		// Exclude pozitiile deja ocupate de bookings confirmate (altele decat cel curent)
+		const toatePozitiile: string[] = (ev?.positions as string[]) || [];
 		const ocupate = new Set(
 			rezervari
 				.filter(r => r.event_id === booking.event_id && r.status === 'confirmat' && r.id !== booking.id)
 				.map(r => r.selected_position)
 				.filter((p): p is string => !!p)
 		);
-
 		pozitiiEveniment = toatePozitiile.filter(p => !ocupate.has(p));
 		showRepartizareModal = true;
 	}
@@ -204,7 +176,7 @@
 				const evTitle = evenimente.find(e => e.id === bookingDeRepartizat!.event_id)?.title ?? 'eveniment';
 				await supabase.from('notifications').insert({
 					user_id: bookingDeRepartizat.user_id,
-					title: 'Ai fost repartizat! 🎯',
+					title: 'Ai fost repartizat!',
 					body: `Ești repartizat pe poziția "${pozitiaSelectata}" la ${evTitle}. Ne vedem pe teren!`,
 					target_event_id: bookingDeRepartizat.event_id,
 					target_type: 'event',
@@ -223,29 +195,22 @@
 		}
 	}
 
-	function convertesteInEveniment(booking: any) {
+	function convertesteInEveniment(booking: Booking) {
 		evenimentCurent = {
 			title: `${booking.activity_title} - ${booking.nume_client}`,
 			description: `Creat din rezervarea nr. ${booking.id.slice(0, 8)}.`,
 			date: booking.preferred_date || new Date().toISOString().slice(0, 10),
 			start_time: booking.preferred_time || '10:00',
 			location: 'Baza HTCMX Airsoft',
-			price: 0,
-			currency: 'RON',
-			status: 'active',
-			is_public: true,
-			max_participants: 30,
-			positions: [],
-			image_url: '',
-			gallery: [],
+			price: 0, currency: 'RON', status: 'active', is_public: true,
+			max_participants: 30, positions: [], image_url: '', gallery: [],
 			origin_booking_id: booking.id
 		};
 		editMode = false;
 		showEvModal = true;
 	}
 
-	// --- LOGICA IMAGINI ---
-	function onFileSelected(e: Event, context: any) {
+	function onFileSelected(e: Event, context: string) {
 		const target = e.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
 			cropContext = context;
@@ -255,16 +220,14 @@
 		}
 	}
 
-	async function handleFinalizeCrop() {
-		if (!cropImage || !croppedAreaPixels) return;
+	async function handleCropFinish(blob: Blob) {
 		incarcareFoto = true;
 		try {
-			const croppedBlob = await getCroppedImg(cropImage, croppedAreaPixels);
-			if (!croppedBlob) throw new Error('Eroare la procesare.');
 			const fileName = `${Date.now()}.jpg`;
 			const filePath = `${cropContext}/${fileName}`;
-			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, croppedBlob);
+			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, blob);
 			if (uploadError) throw uploadError;
+
 			const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
 			const publicUrl = data.publicUrl;
 
@@ -291,268 +254,123 @@
 		evenimentCurent.gallery = newGallery;
 		await refreshEvents();
 	}
+
+	const tabs: { id: Tab; label: string; count?: () => number }[] = [
+		{ id: 'active', label: 'Active' },
+		{ id: 'finished', label: 'Finalizate', count: () => numarFinalizate },
+		{ id: 'cereri', label: 'Cereri', count: () => numarCereri },
+		{ id: 'confirmati', label: 'Confirmați', count: () => numarConfirmati }
+	];
 </script>
 
 <div class="events-manager">
-	<div class="actiuni-pagina" style="display:flex; justify-content: flex-end; gap: 1rem; margin-bottom: 2rem;">
-		{#if subSectiuneEv === 'active' || subSectiuneEv === 'finished'}
-			<button class="buton-primar" onclick={() => deschideEveniment()}>+ Eveniment Nou</button>
+	<div class="bara-actiuni">
+		{#if tabActiv === 'active' || tabActiv === 'finished'}
+			<button class="buton-primar buton-nou" onclick={() => deschideEveniment()}>
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+				Eveniment Nou
+			</button>
 		{/if}
-		<button class="tab-item" class:activ={subSectiuneEv === 'active'} onclick={() => (subSectiuneEv = 'active')}>🔥 Active</button>
-		<button class="tab-item" class:activ={subSectiuneEv === 'finished'} onclick={() => (subSectiuneEv = 'finished')}>🏁 Finalizate ({evenimente.filter(e=>e.status==='finished').length})</button>
-		<button class="tab-item" class:activ={subSectiuneEv === 'cereri'} onclick={() => (subSectiuneEv = 'cereri')}>📥 Cereri ({rezervari.filter(r => r.status === 'nou' || !r.status).length})</button>
-		<button class="tab-item" class:activ={subSectiuneEv === 'confirmati'} onclick={() => (subSectiuneEv = 'confirmati')}>👥 Confirmați ({rezervari.filter(r => r.status === 'confirmat').length})</button>
+		<div class="tabs">
+			{#each tabs as tab}
+				<button
+					class="tab-item"
+					class:activ={tabActiv === tab.id}
+					onclick={() => (tabActiv = tab.id)}
+				>
+					{tab.label}
+					{#if tab.count && tab.count() > 0}
+						<span class="tab-badge">{tab.count()}</span>
+					{/if}
+				</button>
+			{/each}
+		</div>
 	</div>
 
-	<div class="table-scroll" style="background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.03);">
-		{#if subSectiuneEv === 'cereri'}
-			<table>
-				<thead><tr><th>Client</th><th>Activitate</th><th>Telefon</th><th>Eveniment</th><th>Poziție</th><th>Data Cererii</th><th>Acțiuni</th></tr></thead>
-				<tbody>
-					{#each rezervari.filter(r => r.status === 'nou' || !r.status) as r}
-						{@const evAsociat = r.event_id ? evenimente.find(e => e.id === r.event_id) : null}
-						<tr>
-							<td><strong>{r.nume_client}</strong></td>
-							<td>{r.activity_title}</td>
-							<td>{r.telefon}</td>
-							<td>
-								{#if evAsociat}
-									<span style="font-size:1.2rem; color:#2980b9; font-weight:600;">📅 {evAsociat.title}</span>
-								{:else}
-									<span style="color:#bbb">—</span>
-								{/if}
-							</td>
-							<td>
-								{#if r.selected_position}
-									<span class="badge-status status-confirmat">{r.selected_position}</span>
-								{:else}
-									<span style="color:#bbb">—</span>
-								{/if}
-							</td>
-							<td>{new Date(r.created_at).toLocaleDateString('ro-RO')}</td>
-							<td style="display:flex; gap:0.5rem;">
-								{#if r.event_id}
-									<button class="btn-icon" style="background:#2980b9; color:white; border:none; padding:0.6rem 1.2rem;" onclick={() => deschideRepartizare(r)} title="Repartizează poziție">👤</button>
-								{:else}
-									<button class="btn-icon" style="background:#e67e22; color:white; border:none; padding:0.6rem 1.2rem; font-size:1.2rem;" onclick={() => convertesteInEveniment(r)} title="Convertește în Eveniment">🚀</button>
-								{/if}
-								<button class="btn-icon btn-sterge" onclick={() => stergeElement('bookings', r.id)}>🗑️</button>
-							</td>
-						</tr>
-					{:else}
-						<tr><td colspan="7" style="text-align:center; padding: 4rem; color: #999;">Nicio cerere în așteptare.</td></tr>
-					{/each}
-				</tbody>
-			</table>
-		{:else if subSectiuneEv === 'confirmati'}
-			{@const confirmati = rezervari.filter(r => r.status === 'confirmat')}
-			{#if confirmati.length === 0}
-				<div style="text-align:center; padding: 4rem; color: #999;">Niciun participant confirmat încă.</div>
-			{:else}
-				{@const eventIds = [...new Set(confirmati.map(r => r.event_id).filter(Boolean))]}
-				{#each eventIds as eid}
-					{@const evGrup = evenimente.find(e => e.id === eid)}
-					{@const participanti = confirmati.filter(r => r.event_id === eid)}
-					<div style="margin-bottom: 0.5rem;">
-						<div style="display:flex; align-items:center; justify-content:space-between; padding: 1.2rem 2rem; background: var(--primary-tint); border-bottom: 1px solid var(--border);">
-							<span style="font-weight:700; font-size:1.5rem;">📅 {evGrup?.title ?? 'Eveniment necunoscut'}</span>
-							<span style="font-size:1.3rem; color:#666;">{evGrup ? new Date(evGrup.date).toLocaleDateString('ro-RO') : ''} · <strong>{participanti.length}</strong> participanți</span>
-						</div>
-						<table>
-							<thead><tr><th>Participant</th><th>Telefon</th><th>Poziție</th><th>Activitate</th></tr></thead>
-							<tbody>
-								{#each participanti as r}
-									<tr>
-										<td><strong>{r.nume_client}</strong></td>
-										<td>{r.telefon}</td>
-										<td><span class="badge-status status-confirmat">{r.selected_position || '—'}</span></td>
-										<td style="color:#666;">{r.activity_title}</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{/each}
-				{#if confirmati.filter(r => !r.event_id).length > 0}
-					<div style="margin-top: 0.5rem;">
-						<div style="padding: 1.2rem 2rem; background: #f8f9fa; border-bottom: 1px solid var(--border); font-weight:700; font-size:1.5rem;">🔧 Servicii confirmate</div>
-						<table>
-							<thead><tr><th>Client</th><th>Telefon</th><th>Activitate</th></tr></thead>
-							<tbody>
-								{#each confirmati.filter(r => !r.event_id) as r}
-									<tr>
-										<td><strong>{r.nume_client}</strong></td>
-										<td>{r.telefon}</td>
-										<td>{r.activity_title}</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{/if}
-			{/if}
-		{:else}
-			<table>
-				<thead><tr><th>Meci</th><th>Dată</th><th>Preț</th><th>Status</th><th>Acțiuni</th></tr></thead>
-				<tbody>
-					{#each evenimente.filter((e) => e.status === subSectiuneEv) as ev}
-						<tr class:eveniment-trecut={new Date(ev.date) < new Date() && ev.status === 'active'}>
-							<td><strong>{ev.title}</strong></td>
-							<td>{new Date(ev.date).toLocaleDateString('ro-RO')}</td>
-							<td>{ev.price} lei</td>
-							<td><span class="badge-status status-{ev.status}">{ev.status}</span></td>
-							<td style="display:flex; gap:0.5rem;">
-								{#if ev.status === 'active' && new Date(ev.date) < new Date()}
-									<button class="btn-icon" style="background:#2ecc71; color:white; border:none;" onclick={() => finalizeazaEveniment(ev.id)} title="Finalizează">✅</button>
-								{/if}
-								<button class="btn-icon" onclick={() => deschideEveniment(ev)} title="Editează">✏️</button>
-								<button class="btn-icon" style="background:#27ae60; color:white; border:none;" onclick={() => { evenimentCurent = { ...ev }; showEvGalModal = true; }} title="Galerie">🖼️</button>
-								<button class="btn-icon btn-sterge" onclick={() => stergeEveniment(ev)} title="Șterge">🗑️</button>
-							</td>
-						</tr>
-					{:else}
-						<tr><td colspan="5" style="text-align:center; padding: 4rem; color: #999;">Niciun eveniment găsit.</td></tr>
-					{/each}
-				</tbody>
-			</table>
-		{/if}
-	</div>
+	{#if tabActiv === 'cereri'}
+		<CereriTab
+			cereri={rezervari.filter(r => r.status === 'nou' || !r.status)}
+			{evenimente}
+			onRepartizare={deschideRepartizare}
+			onConverteste={convertesteInEveniment}
+			onDelete={stergeBooking}
+		/>
+	{:else if tabActiv === 'confirmati'}
+		<ConfirmatiTab
+			confirmati={rezervari.filter(r => r.status === 'confirmat')}
+			{evenimente}
+		/>
+	{:else}
+		<EventsTab
+			{evenimente}
+			{tabActiv}
+			onEdit={deschideEveniment}
+			onFinalize={finalizeazaEveniment}
+			onDelete={stergeEveniment}
+			onGallery={(ev) => { evenimentCurent = { ...ev }; showEvGalModal = true; }}
+		/>
+	{/if}
 </div>
 
-<!-- MODAL EVENIMENT -->
 {#if showEvModal}
-	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 65rem; max-height: 90vh; overflow-y: auto;">
-			<h2>{editMode ? 'Editează' : 'Creează'} Eveniment</h2>
-			<form onsubmit={salveazaEveniment}>
-				<div class="camp"><label>Titlu</label><input bind:value={evenimentCurent.title} required /></div>
-				<div class="camp"><label>Imagine Hero</label><input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'event_hero')} /></div>
-				{#if evenimentCurent.image_url}
-					<img src={evenimentCurent.image_url} alt="" style="width:100%; height:12rem; object-fit:cover; border-radius:8px; margin-bottom:1rem;" />
-				{/if}
-				<div class="camp"><label>Descriere</label><textarea bind:value={evenimentCurent.description} style="width:100%; height:7rem; border-radius:9px; border:1px solid var(--border); padding:1rem; font-family:inherit; font-size:1.4rem; resize:vertical;"></textarea></div>
-
-				<div class="form-row-2col">
-					<div class="camp">
-						<label>Tip Eveniment</label>
-						<select bind:value={evenimentCurent.type} style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border);">
-							<option value="Milsim">Milsim</option><option value="Speedsoft">Speedsoft</option><option value="Skirmish">Skirmish</option><option value="Antrenament">Antrenament</option><option value="Privat">Privat</option>
-						</select>
-					</div>
-					<div class="camp"><label>Preț (RON)</label><input type="number" min="0" bind:value={evenimentCurent.price} /></div>
-					<div class="camp"><label>Data</label><input type="date" bind:value={evenimentCurent.date} required /></div>
-					<div class="camp"><label>Ora Start</label><input type="time" bind:value={evenimentCurent.start_time} /></div>
-					<div class="camp"><label>Durată</label><input bind:value={evenimentCurent.duration} /></div>
-					<div class="camp"><label>Max Participanți</label><input type="number" min="1" bind:value={evenimentCurent.max_participants} /></div>
-				</div>
-
-				<div class="camp"><label>Locație</label><input bind:value={evenimentCurent.location} required /></div>
-
-				<div class="camp">
-					<label>Poziții disponibile (separate prin virgulă)</label>
-					<input placeholder="ex: Atacant, Apărător, Medic" value={evenimentCurent.positions?.join(', ')} onchange={(e) => evenimentCurent.positions = e.currentTarget.value.split(',').map((s: string) => s.trim()).filter((s: string) => s)} />
-				</div>
-
-				<div style="display:flex; gap:2rem; align-items:center; background:var(--primary-tint); padding:1.2rem 1.6rem; border-radius:9px; margin-top:0.5rem;">
-					<label style="display:flex; align-items:center; gap:0.8rem; cursor:pointer; font-size:1.4rem; font-weight:600;">
-						<input type="checkbox" bind:checked={evenimentCurent.is_public} style="width:1.8rem; height:1.8rem;" /> Eveniment Public
-					</label>
-					<div class="camp" style="margin:0; flex:1;">
-						<select bind:value={evenimentCurent.status} style="width:100%; padding:0.8rem 1rem; border-radius:9px; border:1px solid var(--border);">
-							<option value="active">🔥 Activ</option><option value="pending">⏳ În Așteptare</option><option value="finished">🏁 Finalizat</option>
-						</select>
-					</div>
-				</div>
-
-				<div style="display:flex; gap:1rem; margin-top:2rem;">
-					<button type="button" class="buton-iesire" style="flex:1" onclick={() => (showEvModal = false)}>Anulează</button>
-					<button type="submit" class="buton-primar" style="flex:2" disabled={saving}>{saving ? 'Se salvează...' : 'Salvează'}</button>
-				</div>
-			</form>
-		</div>
-	</div>
+	<EventModal
+		bind:eveniment={evenimentCurent}
+		{editMode}
+		{saving}
+		onClose={() => (showEvModal = false)}
+		onSave={salveazaEveniment}
+		{onFileSelected}
+	/>
 {/if}
 
-<!-- MODAL GALERIE EVENIMENT -->
 {#if showEvGalModal}
-	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 80rem; max-height: 85vh; display: flex; flex-direction: column;">
-			<div style="display:flex; justify-content:space-between; margin-bottom:2rem;">
-				<h2>Galerie: {evenimentCurent.title}</h2>
-				<button class="buton-iesire" onclick={() => showEvGalModal = false}>Închide</button>
-			</div>
-			<div class="camp"><label>Încarcă poze noi (16:9)</label><input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'event_gallery')} /></div>
-			<div class="galerie-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; overflow-y: auto; flex: 1;">
-				{#each evenimentCurent.gallery || [] as url}
-					<div class="foto-card" style="position:relative;">
-						<img src={url} alt="" style="width:100%; height:10rem; object-fit:cover; border-radius:8px;" />
-						<button class="btn-sterge-foto" style="position:absolute; top:0.5rem; right:0.5rem; background:rgba(231,76,60,0.8); color:white; border:none; border-radius:50%; width:2.4rem; height:2.4rem; cursor:pointer;" onclick={() => stergeFotoEveniment(url)}>×</button>
-					</div>
-				{/each}
-			</div>
-		</div>
-	</div>
+	<GalerieModal
+		eveniment={evenimentCurent}
+		onClose={() => (showEvGalModal = false)}
+		{onFileSelected}
+		onDeletePhoto={stergeFotoEveniment}
+	/>
 {/if}
 
 {#if cropImage}
-	<div class="modal-overlay" style="z-index: 2000;">
-		<div class="login-card" style="max-width: 90rem; height: 90vh; display: flex; flex-direction: column;">
-			<h2>Decupează Imaginea</h2>
-			<div style="flex: 1; position: relative; background: #222; border-radius: 12px; overflow: hidden; margin-bottom: 2rem;">
-				<Cropper image={cropImage} bind:crop bind:zoom aspect={16/9} oncropcomplete={({ pixels }) => (croppedAreaPixels = pixels)} />
-			</div>
-			<div style="display: flex; gap: 1rem;">
-				<button class="buton-iesire" style="flex: 1" onclick={() => cropImage = null}>Anulează</button>
-				<button class="buton-primar" style="flex: 2" onclick={handleFinalizeCrop} disabled={incarcareFoto}>{incarcareFoto ? 'Se salvează...' : 'Finalizează'}</button>
-			</div>
-		</div>
-	</div>
+	<CropModal
+		{cropImage}
+		saving={incarcareFoto}
+		onFinish={handleCropFinish}
+		onCancel={() => (cropImage = null)}
+	/>
 {/if}
 
-<!-- MODAL REPARTIZARE -->
 {#if showRepartizareModal && bookingDeRepartizat}
-	{@const evAsociatModal = bookingDeRepartizat.event_id ? evenimente.find(e => e.id === bookingDeRepartizat!.event_id) : null}
-	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 50rem;">
-			<h2>👤 Repartizare Poziție</h2>
-			<div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--primary-tint); border-radius: 9px; display: flex; flex-direction: column; gap: 0.6rem;">
-				<div><strong>Client:</strong> {bookingDeRepartizat.nume_client}</div>
-				<div><strong>Telefon:</strong> {bookingDeRepartizat.telefon}</div>
-				<div><strong>Activitate:</strong> {bookingDeRepartizat.activity_title}</div>
-				{#if evAsociatModal}
-					<div><strong>Eveniment:</strong> {evAsociatModal.title}</div>
-				{/if}
-			</div>
-
-			{#if pozitiiEveniment.length > 0}
-				<div class="camp">
-					<label>Selectează Poziția</label>
-					<select bind:value={pozitiaSelectata} style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border); font-size:1.4rem;">
-						<option value="">-- alege poziția --</option>
-						{#each pozitiiEveniment as poz}
-							<option value={poz}>{poz}</option>
-						{/each}
-					</select>
-				</div>
-			{:else}
-				<div style="background:#fff3cd; padding:1.5rem; border-radius:9px; margin-bottom:1.5rem;">
-					<p style="margin:0 0 0.8rem; font-size:1.3rem; color:#856404;">Evenimentul nu are poziții definite. Introdu manual:</p>
-					<input bind:value={pozitiaSelectata} placeholder="ex: Atacant, Medic, Apărător..." style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border); font-size:1.4rem; box-sizing:border-box;" />
-				</div>
-			{/if}
-
-			<div style="display:flex; gap:1rem; margin-top:2rem;">
-				<button type="button" class="buton-iesire" style="flex:1" onclick={() => showRepartizareModal = false}>Anulează</button>
-				<button type="button" class="buton-primar" style="flex:2" disabled={savingRepartizare || !pozitiaSelectata} onclick={salveazaRepartizare}>
-					{savingRepartizare ? 'Se salvează...' : '✅ Confirmă Repartizare'}
-				</button>
-			</div>
-		</div>
-	</div>
+	<RepartizareModal
+		booking={bookingDeRepartizat}
+		eveniment={bookingDeRepartizat.event_id ? (evenimente.find(e => e.id === bookingDeRepartizat!.event_id) ?? null) : null}
+		pozitii={pozitiiEveniment}
+		bind:pozitiaSelectata
+		saving={savingRepartizare}
+		onSave={salveazaRepartizare}
+		onClose={() => (showRepartizareModal = false)}
+	/>
 {/if}
 
 <style>
-	.tab-item { background: none; border: none; padding: 1rem 1.6rem; font-size: 1.4rem; font-weight: 700; color: #666; cursor: pointer; border-radius: 10px; transition: all 0.2s; }
-	.tab-item.activ { background: white; color: var(--dark); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-	.eveniment-trecut { background-color: #fff9db !important; }
+	.events-manager { display: flex; flex-direction: column; gap: 2rem; }
+	.bara-actiuni { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+	.buton-nou { display: flex; align-items: center; gap: 0.6rem; }
+	.tabs { display: flex; gap: 0.4rem; background: #f1f3f5; padding: 0.4rem; border-radius: 12px; }
+	.tab-item {
+		background: none; border: none; padding: 0.8rem 1.6rem;
+		font-size: 1.4rem; font-weight: 600; color: #666;
+		cursor: pointer; border-radius: 8px; transition: all 0.2s;
+		display: flex; align-items: center; gap: 0.6rem;
+		font-family: inherit;
+	}
+	.tab-item:hover { color: var(--dark); background: rgba(255,255,255,0.7); }
+	.tab-item.activ { background: white; color: var(--dark); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+	.tab-badge {
+		background: var(--primary); color: white;
+		font-size: 1.1rem; font-weight: 700;
+		padding: 0.1rem 0.6rem; border-radius: 100px;
+		min-width: 2rem; text-align: center;
+	}
 </style>
