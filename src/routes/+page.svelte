@@ -154,7 +154,22 @@
 	});
 </script>
 
-<svelte:head><title>HTCMX Airsoft — Admin</title></svelte:head>
+<svelte:head>
+	<title>HTCMX Airsoft — Admin Panel</title>
+	<meta name="description" content="Panou de administrare HTCMX Airsoft. Gestionează evenimentele, misiunile și magazinul platformei." />
+	
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="HTCMX Airsoft Admin" />
+	<meta property="og:description" content="Gestionare tactică a evenimentelor și resurselor HTCMX Airsoft." />
+	<meta property="og:image" content="/img/htcmx-logo.jpg" />
+
+	<!-- Twitter -->
+	<meta property="twitter:card" content="summary_large_image" />
+	<meta property="twitter:title" content="HTCMX Airsoft Admin" />
+	<meta property="twitter:description" content="Gestionare tactică a evenimentelor și resurselor HTCMX Airsoft." />
+	<meta property="twitter:image" content="/img/htcmx-logo.jpg" />
+</svelte:head>
 
 <div class="admin-wrapper">
 	{#if !authenticated}

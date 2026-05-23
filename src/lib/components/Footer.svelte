@@ -6,7 +6,7 @@
 	<div class="container grila grila--subsol">
 		<div class="coloana-logo">
 			<a href="#" class="subsol-logo">
-				<img class="logo" alt="Omnifood logo" src="/img/omnifood-logo.png" />
+				<img class="logo" alt="HTCMX Airsoft logo" src="/img/htcmx-logo.jpg" />
 			</a>
 
 			<ul class="linkuri-sociale">
@@ -28,16 +28,16 @@
 			</ul>
 
 			<p class="drepturi-autor">
-				Drepturi de autor &copy; <span class="an">{currentYear}</span> Podut Petru. Toate drepturile rezervate.
+				Drepturi de autor &copy; <span class="an">{currentYear}</span> HTCMX Airsoft. Toate drepturile rezervate.
 			</p>
 		</div>
 
 		<div class="coloana-adresa">
 			<p class="subsol-titlu">Contactează-ne</p>
 			<address class="contacte">
-				<p class="adresa">Baia Mare, Maramureș, România</p>
+				<p class="adresa">Maramureș, România</p>
 				<p>
-					<a class="subsol-link" href="mailto:podutpetru@gmail.com">podutpetru@gmail.com</a>
+					<a class="subsol-link" href="mailto:contact@htcmx.ro">contact@htcmx.ro</a>
 				</p>
 			</address>
 		</div>
@@ -55,9 +55,9 @@
 		<nav class="coloana-nav">
 			<p class="subsol-titlu">Companie</p>
 			<ul class="subsol-nav">
-				<li><a class="subsol-link" href="#">Despre Omnifood</a></li>
+				<li><a class="subsol-link" href="#">Despre HTCMX Airsoft</a></li>
 				<li><a class="subsol-link" href="#">Pentru afaceri</a></li>
-				<li><a class="subsol-link" href="#">Parteneri de gătit</a></li>
+				<li><a class="subsol-link" href="#">Parteneri</a></li>
 				<li><a class="subsol-link" href="#">Cariere</a></li>
 			</ul>
 		</nav>

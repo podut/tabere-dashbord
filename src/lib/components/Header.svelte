@@ -12,7 +12,7 @@
 
 <header class="antet" class:nav-deschis={navOpen}>
 	<a href="/">
-		<img class="logo" alt="Omnifood logo" src="/img/omnifood-logo.png" />
+		<img class="logo" alt="HTCMX Airsoft logo" src="/img/htcmx-logo.jpg" />
 	</a>
 
 	<nav class="nav-principal">
