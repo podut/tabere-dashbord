@@ -43,26 +43,6 @@
 </script>
 
 <div class="orders-manager">
-	<!-- Stats mini -->
-	<div class="orders-stats-grid">
-		<div class="order-stat-card border-nou">
-			<span class="valoare color-nou">{cmdStats.nou}</span>
-			<span class="eticheta">Comenzi Noi</span>
-		</div>
-		<div class="order-stat-card border-confirmat">
-			<span class="valoare color-confirmat">{cmdStats.confirmat}</span>
-			<span class="eticheta">Confirmate</span>
-		</div>
-		<div class="order-stat-card border-finalizat">
-			<span class="valoare color-finalizat">{cmdStats.finalizat}</span>
-			<span class="eticheta">Finalizate</span>
-		</div>
-		<div class="order-stat-card border-venituri">
-			<span class="valoare color-primary">{cmdStats.venituriAzi.toLocaleString()} RON</span>
-			<span class="eticheta">Venituri Azi</span>
-		</div>
-	</div>
-
 	<!-- Tabs + Search -->
 	<div class="bara-filtrare">
 		<div class="tabs-intern">
@@ -138,33 +118,6 @@
 </div>
 
 <style>
-	.orders-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1.6rem; margin-bottom: 3.2rem; }
-	
-	.order-stat-card {
-		background: var(--bg-card);
-		padding: 2rem 2.4rem;
-		border-radius: 14px;
-		border: 1px solid var(--border);
-		border-left-width: 6px;
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-	}
-
-	.border-nou { border-left-color: #3498db; }
-	.border-confirmat { border-left-color: #f39c12; }
-	.border-finalizat { border-left-color: #27ae60; }
-	.border-venituri { border-left-color: var(--primary); }
-
-	.color-nou { color: #3498db; }
-	.color-confirmat { color: #f39c12; }
-	.color-finalizat { color: #27ae60; }
-	.color-primary { color: var(--primary); }
-
-	.valoare { font-size: 2.8rem; font-weight: 800; line-height: 1; }
-	.eticheta { font-size: 1.2rem; color: var(--text-grey); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-
 	.bara-filtrare { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 2rem; margin-bottom: 2.4rem; }
 
 	.tabs-intern { display: flex; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--border); gap: 0.5rem; }
