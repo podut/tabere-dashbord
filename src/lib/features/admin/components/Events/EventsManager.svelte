@@ -147,6 +147,33 @@
 		if (!error) { await refreshBookings(); showToast('success', 'Șters.'); }
 	}
 
+	async function mutaParticipant(bookingId: string, newPosition: string) {
+		const { error } = await supabase
+			.from('bookings')
+			.update({ selected_position: newPosition })
+			.eq('id', bookingId);
+		if (error) { showToast('error', error.message); return; }
+		await refreshBookings();
+		showToast('success', `Mutat pe poziția "${newPosition}".`);
+	}
+
+	async function elibereazaPozitia(bookingId: string) {
+		if (!(await confirmDialog({
+			title: 'Scoți participantul din poziție?',
+			message: 'Statusul va reveni la "nou" și poziția va fi eliberată.',
+			confirmLabel: 'Scoate',
+			danger: false
+		}))) return;
+
+		const { error } = await supabase
+			.from('bookings')
+			.update({ selected_position: '', status: 'nou' })
+			.eq('id', bookingId);
+		if (error) { showToast('error', error.message); return; }
+		await refreshBookings();
+		showToast('success', 'Participant scos din poziție.');
+	}
+
 	function deschideRepartizare(booking: Booking) {
 		bookingDeRepartizat = booking;
 		pozitiaSelectata = booking.selected_position || '';
@@ -299,6 +326,8 @@
 		<ConfirmatiTab
 			confirmati={rezervari.filter(r => r.status === 'confirmat')}
 			{evenimente}
+			onMutaParticipant={mutaParticipant}
+			onElibereazaPozitia={elibereazaPozitia}
 		/>
 	{:else}
 		<EventsTab
@@ -357,16 +386,16 @@
 	.events-manager { display: flex; flex-direction: column; gap: 2rem; }
 	.bara-actiuni { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; flex-wrap: wrap; }
 	.buton-nou { display: flex; align-items: center; gap: 0.6rem; }
-	.tabs { display: flex; gap: 0.4rem; background: #f1f3f5; padding: 0.4rem; border-radius: 12px; }
+	.tabs { display: flex; gap: 0.4rem; background: rgba(0,0,0,0.3); padding: 0.4rem; border-radius: 12px; border: 1px solid var(--border); }
 	.tab-item {
 		background: none; border: none; padding: 0.8rem 1.6rem;
-		font-size: 1.4rem; font-weight: 600; color: #666;
+		font-size: 1.4rem; font-weight: 600; color: var(--text-grey);
 		cursor: pointer; border-radius: 8px; transition: all 0.2s;
 		display: flex; align-items: center; gap: 0.6rem;
 		font-family: inherit;
 	}
-	.tab-item:hover { color: var(--dark); background: rgba(255,255,255,0.7); }
-	.tab-item.activ { background: white; color: var(--dark); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+	.tab-item:hover { color: var(--text); background: rgba(197,160,48,0.06); }
+	.tab-item.activ { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid var(--border); }
 	.tab-badge {
 		background: var(--primary); color: white;
 		font-size: 1.1rem; font-weight: 700;
