@@ -9,6 +9,7 @@
 		Partner, Gallery, WebsiteContent, Profile
 	} from '$lib/types';
 	import '../lib/styles/admin.css';
+	import '../lib/styles/mobile-fold.css';
 
 	// Components
 	import LoginScreen from '$lib/features/admin/components/Auth/LoginScreen.svelte';
@@ -236,6 +237,25 @@
 				{/if}
 			</main>
 		</div>
+
+		<!-- Mobile Bottom Nav -->
+		<nav class="mobile-nav" style="display:none;">
+			<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => sectiuneActiva = 'evenimente'}>
+				<span>📅</span><small>Evenim.</small>
+			</button>
+			<button class:activ={sectiuneActiva === 'comenzi'} onclick={() => sectiuneActiva = 'comenzi'}>
+				<span>📦</span><small>Comenzi</small>
+			</button>
+			<button class:activ={sectiuneActiva === 'notificari'} onclick={() => sectiuneActiva = 'notificari'}>
+				<span>📢</span><small>Notif.</small>
+			</button>
+			<button class:activ={sectiuneActiva === 'site'} onclick={() => sectiuneActiva = 'site'}>
+				<span>🌐</span><small>Site</small>
+			</button>
+			<button onclick={handleLogout}>
+				<span>🚪</span><small>Ieșire</small>
+			</button>
+		</nav>
 	{/if}
 </div>
 

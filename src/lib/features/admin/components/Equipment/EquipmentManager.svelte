@@ -142,7 +142,8 @@
 				</div>
 				<div class="eq-sub-items">
 					{#each echipament.filter((e) => e.parent_id === parent.id) as sub}
-						<div class="eq-sub-card">
+						<!-- Desktop Card -->
+						<div class="eq-sub-card desktop-only">
 							{#if sub.image_url}<img src={sub.image_url} alt="" class="eq-sub-img" />{/if}
 							<div class="eq-sub-info">
 								<h4>{sub.title}</h4>
@@ -155,6 +156,11 @@
 									</button>
 								</div>
 							</div>
+						</div>
+
+						<!-- Mobile Card -->
+						<div class="mobile-only">
+							<EquipmentMobileCard {sub} onEdit={deschideEq} onDelete={stergeEq} />
 						</div>
 					{:else}
 						<p class="empty-state">Niciun produs adăugat în această secțiune.</p>
@@ -343,5 +349,16 @@
 
 	.upload-zone-wrapper {
 		margin-bottom: 1.6rem;
+	}
+
+	.mobile-only { display: none; }
+	.desktop-only { display: flex; }
+
+	@media (max-width: 768px) {
+		.desktop-only { display: none !important; }
+		.mobile-only { display: block; width: 100%; }
+		.eq-sub-items { grid-template-columns: 1fr !important; padding: 1.2rem !important; }
+		.eq-parent-header { flex-direction: column; align-items: flex-start; gap: 1.6rem; }
+		.eq-parent-actions { width: 100%; justify-content: space-between; }
 	}
 </style>

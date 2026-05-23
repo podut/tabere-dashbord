@@ -4,6 +4,7 @@
 	import { getCroppedImg } from '$lib/utils/image';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { Product } from '$lib/types';
+	import ProductMobileCard from './view/ProductMobileCard.svelte';
 
 	let { produse = $bindable([]), refreshProducts }: { 
 		produse: Product[],
@@ -150,7 +151,21 @@
 		</button>
 	</div>
 
-	<div class="table-scroll shop-table-container">
+	<!-- Mobile View -->
+	<div class="mobile-only-grid">
+		{#each produse as p}
+			<ProductMobileCard 
+				{p} 
+				onEdit={deschideProdus} 
+				onGallery={(p) => { produsCurent = { ...p, images: p.images || [] }; showProdGalModal = true; }} 
+				onDelete={stergeProdus} 
+			/>
+		{:else}
+			<div class="td-gol">Niciun produs în magazin.</div>
+		{/each}
+	</div>
+
+	<div class="table-scroll shop-table-container desktop-only-table">
 		<table>
 			<thead><tr><th>Img</th><th>Nume</th><th>Preț</th><th>Stoc</th><th>Acțiuni</th></tr></thead>
 			<tbody>
@@ -223,6 +238,13 @@
 	.btn-galerie:hover { background: rgba(52, 152, 219, 0.1); border-color: var(--accent-blue); }
 
 	.td-gol { text-align: center; padding: 6rem; color: var(--text-grey); font-size: 1.5rem; font-style: italic; }
+
+	.mobile-only-grid { display: none; }
+
+	@media (max-width: 768px) {
+		.desktop-only-table { display: none; }
+		.mobile-only-grid { display: block; padding: 0.5rem; }
+	}
 
 	.galerie-grid {
 		display: grid;

@@ -1,0 +1,144 @@
+/* HTCMX Airsoft Admin — Mobile Optimization (Focus: Samsung Z Fold 4) */
+
+/* 1. Reset & Global Base */
+@media (max-width: 600px) {
+    :root {
+        --sidebar-width: 0px;
+    }
+
+    body {
+        font-size: 1.4rem;
+    }
+
+    .layout-continut {
+        padding: 0 1.2rem 8rem !important; /* Spatiu pentru bottom nav */
+        flex-direction: column;
+    }
+
+    .sidebar {
+        display: none !important;
+    }
+
+    /* Transformare Sidebar in Bottom Nav */
+    .mobile-nav {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--bg-card);
+        border-top: 1px solid var(--border);
+        padding: 0.8rem;
+        z-index: 1000;
+        justify-content: space-around;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+    }
+
+    .mobile-nav button {
+        background: none;
+        border: none;
+        color: var(--text-grey);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        flex: 1;
+    }
+
+    .mobile-nav button.activ {
+        color: var(--primary);
+    }
+
+    /* Stats Grid Collapse */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1.2rem !important;
+    }
+
+    .stat-card {
+        padding: 1.4rem !important;
+    }
+
+    .valoare {
+        font-size: 2rem !important;
+    }
+
+    /* Table to Cards */
+    .table-scroll table thead {
+        display: none;
+    }
+
+    .table-scroll table, 
+    .table-scroll tbody, 
+    .table-scroll tr, 
+    .table-scroll td {
+        display: block;
+        width: 100%;
+    }
+
+    .table-scroll tr {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 1.6rem;
+        padding: 1.2rem;
+    }
+
+    .table-scroll td {
+        padding: 0.6rem 0;
+        border: none !important;
+    }
+
+    /* Modal Mobile */
+    .login-card {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+        padding: 2rem 1.6rem !important;
+    }
+
+    .modal-overlay {
+        padding: 0 !important;
+    }
+
+    .form-row-2col, .form-row-3col {
+        grid-template-columns: 1fr !important;
+        gap: 1.2rem !important;
+    }
+}
+
+/* 2. Z Fold 4 Folded (Cover Screen) Specifics */
+@media (max-width: 400px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .titlu-pagina h1 {
+        font-size: 2.2rem !important;
+    }
+}
+
+/* 3. Z Fold 4 Unfolded (Main Screen) */
+@media (min-width: 601px) and (max-width: 900px) {
+    .layout-continut {
+        gap: 1.6rem !important;
+    }
+    
+    .sidebar {
+        width: 7rem !important;
+        padding: 0.8rem !important;
+    }
+    
+    .sidebar button span {
+        display: none;
+    }
+    
+    .sidebar button {
+        justify-content: center;
+        padding: 1.4rem !important;
+    }
+}

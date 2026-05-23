@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { EventRow } from '$lib/types';
+	import EventMobileCard from './view/EventMobileCard.svelte';
 
 	let { evenimente, tabActiv, onEdit, onFinalize, onDelete, onGallery }: {
 		evenimente: EventRow[];
@@ -14,7 +15,16 @@
 	const acum = new Date();
 </script>
 
-<div class="tabel-container table-scroll">
+<!-- Mobile View -->
+<div class="mobile-only-grid">
+	{#each listaFiltrata as ev}
+		<EventMobileCard {ev} {onEdit} {onFinalize} {onDelete} {onGallery} {acum} />
+	{:else}
+		<div class="td-gol">Niciun eveniment găsit.</div>
+	{/each}
+</div>
+
+<div class="tabel-container table-scroll desktop-only-table">
 	<table>
 		<thead>
 			<tr>
@@ -105,4 +115,11 @@
 	.age-target { font-size: 1.1rem; color: var(--accent-blue); font-weight: 700; }
 	
 	.td-gol { text-align: center; padding: 4rem; color: #999; }
+
+	.mobile-only-grid { display: none; }
+
+	@media (max-width: 768px) {
+		.desktop-only-table { display: none; }
+		.mobile-only-grid { display: block; padding: 0.5rem; }
+	}
 </style>

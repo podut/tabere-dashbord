@@ -2,6 +2,7 @@
 	import { supabase } from '$lib/supabase';
 	import { showToast } from '$lib/admin/notify.svelte';
 	import type { OrderRow } from '$lib/types';
+	import OrderMobileCard from './view/OrderMobileCard.svelte';
 
 	let { comenzi = $bindable([]), refreshOrders }: { 
 		comenzi: OrderRow[],
@@ -71,7 +72,16 @@
 		</div>
 	</div>
 
-	<div class="table-scroll orders-table-container">
+	<!-- Mobile View -->
+	<div class="mobile-only-grid">
+		{#each comenziFiltrate as c}
+			<OrderMobileCard order={c} onClick={() => comenziDetalii = c} onUpdateStatus={updateStatusComanda} />
+		{:else}
+			<div class="td-gol">Nicio comandă găsită.</div>
+		{/each}
+	</div>
+
+	<div class="table-scroll orders-table-container desktop-only-table">
 		<table>
 			<thead>
 				<tr>
@@ -164,6 +174,13 @@
 	.btn-anula:hover { background: var(--danger-tint); border-color: var(--danger); }
 
 	.td-gol { text-align: center; padding: 6rem; color: var(--text-grey); font-size: 1.5rem; font-style: italic; }
+
+	.mobile-only-grid { display: none; }
+
+	@media (max-width: 768px) {
+		.desktop-only-table { display: none; }
+		.mobile-only-grid { display: block; padding: 0.5rem; }
+	}
 	
 	.detalii-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.4rem; border-bottom: 1px solid var(--border); padding-bottom: 1.6rem; }
 	.info-grid { background: var(--bg-dark); border-radius: 12px; border: 1px solid var(--border); padding: 2rem; margin-bottom: 2.4rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2.4rem; }
