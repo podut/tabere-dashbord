@@ -77,20 +77,32 @@ body {
 
 /* STATS BAR */
 .performanta-sectiune {
-    background: var(--bg-card);
+    background: linear-gradient(to right, var(--bg-card), #0d250d);
     border-bottom: 1px solid var(--border);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
-.stats-wrapper { max-width: 120rem; margin: 0 auto; padding: 1.6rem 3.2rem; }
-.sectiune-label { font-size: 1.1rem; color: var(--text-grey); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.2rem; font-weight: 600; }
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6rem; }
+.stats-wrapper { max-width: 130rem; margin: 0 auto; padding: 2rem 3.2rem; }
+.sectiune-label { font-size: 1.2rem; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.6rem; font-weight: 700; opacity: 0.8; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; }
 .stat-card {
-    background: var(--primary-tint); padding: 1.6rem 2rem; border-radius: 12px; border: 1px solid var(--border);
-    display: flex; flex-direction: column; gap: 0.3rem; transition: all 0.25s;
+    background: rgba(197, 160, 48, 0.04); padding: 1.8rem 2.4rem; border-radius: 14px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 0.4rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
 }
-.stat-card:hover { border-color: var(--primary); background: var(--primary-tint2); }
-.valoare { font-size: 2.4rem; font-weight: 700; color: var(--primary); line-height: 1.1; }
-.eticheta { font-size: 1rem; color: var(--text-grey); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+.stat-card::after {
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--primary); opacity: 0; transition: opacity 0.3s;
+}
+.stat-card:hover { border-color: var(--primary-strong); background: var(--primary-tint2); transform: translateY(-3px); }
+.stat-card:hover::after { opacity: 1; }
+.valoare { font-size: 2.8rem; font-weight: 800; color: var(--text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.eticheta { font-size: 1.1rem; color: var(--text-grey); text-transform: uppercase; font-weight: 600; letter-spacing: 0.8px; }
+
+/* SCROLLBARS */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-shade); }
 
 /* TABEL */
 .tabel-container {
@@ -181,7 +193,9 @@ tr:hover td { background-color: var(--primary-tint); }
 }
 .foto-card:hover { transform: translateY(-5px); box-shadow: 0 12px 24px rgba(0,0,0,0.35); border-color: var(--primary); }
 .foto-img { width: 100%; height: 16rem; object-fit: cover; }
-.foto-info { padding: 1.2rem; }
+.foto-info { padding: 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+.foto-label { font-size: 1.3rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.foto-actions { display: flex; gap: 0.6rem; }
 .btn-sterge-foto {
     background: var(--danger-tint); color: var(--danger); border: 1px solid rgba(224, 49, 49, 0.3);
     padding: 0.8rem; border-radius: 6px; font-weight: 600; cursor: pointer;

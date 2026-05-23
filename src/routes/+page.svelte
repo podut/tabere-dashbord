@@ -202,17 +202,17 @@
 <ConfirmHost />
 
 <style>
-	.admin-wrapper { min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; }
-	.layout-continut { display: flex; flex: 1; gap: 2rem; padding: 2rem; max-width: 160rem; margin: 0 auto; width: 100%; }
-	.sidebar { width: 24rem; flex-shrink: 0; }
-	.sidebar nav { display: flex; flex-direction: column; gap: 0.5rem; position: sticky; top: 2rem; }
+	.admin-wrapper { min-height: 100vh; background: var(--bg-dark); display: flex; flex-direction: column; }
+	.layout-continut { display: flex; flex: 1; gap: 2.4rem; padding: 0 3.2rem 3.2rem; max-width: 130rem; margin: 0 auto; width: 100%; }
+	.sidebar { width: 24rem; flex-shrink: 0; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); height: fit-content; padding: 1.2rem; position: sticky; top: 2rem; }
+	.sidebar nav { display: flex; flex-direction: column; gap: 0.6rem; }
 	.sidebar button { 
-		display: flex; align-items: center; gap: 1.2rem; padding: 1.2rem 1.6rem; border-radius: 12px;
-		border: none; background: transparent; color: #555; font-size: 1.4rem; font-weight: 600;
+		display: flex; align-items: center; gap: 1.2rem; padding: 1.2rem 1.6rem; border-radius: 10px;
+		border: none; background: transparent; color: var(--text-grey); font-size: 1.45rem; font-weight: 500;
 		cursor: pointer; transition: all 0.2s; text-align: left;
 	}
-	.sidebar button:hover { background: white; color: var(--primary); }
-	.sidebar button.activ { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+	.sidebar button:hover { background: var(--bg-hover); color: var(--primary); }
+	.sidebar button.activ { background: var(--primary); color: var(--bg-dark); font-weight: 700; box-shadow: 0 4px 15px rgba(197, 160, 48, 0.25); }
 	.zona-lucru { flex: 1; min-width: 0; }
-	.incarcare { display: flex; align-items: center; justify-content: center; height: 40rem; font-size: 1.6rem; color: #888; }
+	.incarcare { display: flex; align-items: center; justify-content: center; height: 40rem; font-size: 1.6rem; color: var(--text-grey); }
 </style>

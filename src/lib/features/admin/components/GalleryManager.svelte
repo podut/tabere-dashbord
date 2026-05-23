@@ -67,14 +67,13 @@
                 ondragstart={() => dragGalIdx = i}
                 ondragover={(e) => e.preventDefault()}
                 ondrop={() => reorderGalerie(i)}
-                style="background:white; border-radius:12px; overflow:hidden; border:1px solid var(--border); transition: transform 0.2s;"
             >
-                <img src={g.url} alt="" style="width:100%; height:15rem; object-fit:cover;" />
-                <div style="padding: 1rem; display:flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size:1.2rem; font-weight:600; color:#555;">{g.label || 'Fără titlu'}</span>
-                    <div style="display:flex; gap:0.5rem;">
-                        <button class="btn-icon" style="padding:0.4rem;" onclick={() => { galFotoEdit = { id: g.id, label: g.label || '' }; showGalEditModal = true; }}>✏️</button>
-                        <button class="btn-icon btn-sterge" style="padding:0.4rem;" onclick={() => stergeFoto(g.id)}>🗑️</button>
+                <img src={g.url} alt="" class="foto-img" />
+                <div class="foto-info">
+                    <span class="foto-label">{g.label || 'Fără titlu'}</span>
+                    <div class="foto-actions">
+                        <button class="btn-icon" onclick={() => { galFotoEdit = { id: g.id, label: g.label || '' }; showGalEditModal = true; }}>✏️</button>
+                        <button class="btn-icon btn-sterge" onclick={() => stergeFoto(g.id)}>🗑️</button>
                     </div>
                 </div>
             </div>
