@@ -141,14 +141,14 @@
 <div class="notifications-panel">
 	<div class="bara-actiuni">
 		<div class="tabs-stanga">
-			<div class="tabs">
+			<div class="tabs-intern-notif">
 				{#each [
 					{ key: 'all', label: 'Toate' },
 					{ key: 'programat', label: 'Programate' },
 					{ key: 'trimis', label: 'Trimise' }
 				] as tab}
 					<button
-						class="tab-item"
+						class="tab-item-notif"
 						class:activ={notifFiltruStatus === tab.key}
 						onclick={() => { notifFiltruStatus = tab.key as any; incarcaNotificari(true); }}
 					>{tab.label}</button>
@@ -164,7 +164,7 @@
 		</button>
 	</div>
 
-	<div class="tabel-container table-scroll">
+	<div class="tabel-container table-scroll notif-table-container">
 		<table>
 			<thead>
 				<tr>
@@ -180,8 +180,10 @@
 					{@const ds = deliveryState(n)}
 					<tr class:randul-expirat={ds === 'expired'}>
 						<td>
-							<strong>{n.title}</strong>
-							<span class="mesaj-preview">{n.body}</span>
+							<div class="notif-info-celula">
+								<strong class="notif-titlu-text">{n.title}</strong>
+								<span class="mesaj-preview">{n.body}</span>
+							</div>
 						</td>
 						<td><span class="badge-status status-{n.status}">{n.status}</span></td>
 						<td>
@@ -213,7 +215,7 @@
 
 	{#if notificari.length < notifTotal}
 		<div class="mai-multe">
-			<button class="buton-iesire" disabled={notifIncarcare} onclick={() => incarcaNotificari(false)}>
+			<button class="buton-iesire load-more-btn" disabled={notifIncarcare} onclick={() => incarcaNotificari(false)}>
 				{notifIncarcare ? 'Se încarcă...' : `Mai multe (${notifTotal - notificari.length} rămase)`}
 			</button>
 		</div>
@@ -225,9 +227,7 @@
 		<div class="login-card modal-notif">
 			<div class="modal-header">
 				<h2 id="notif-titlu">Notificare Nouă</h2>
-				<button class="btn-inchide" onclick={() => (showNotifModal = false)} aria-label="Închide">
-					<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-				</button>
+				<button class="btn-icon" onclick={() => (showNotifModal = false)} aria-label="Închide" style="font-size: 2rem;">×</button>
 			</div>
 
 			<form onsubmit={salveazaNotificare}>
@@ -276,7 +276,7 @@
 						<label for="notif-ora-zilnica">Ora de trimitere (zilnic)</label>
 						<div class="input-cu-unitate">
 							<input id="notif-ora-zilnica" type="number" min="0" max="23" bind:value={nouaNotif.recurring_hour} class="input-ora" />
-							<span class="unitate">:00</span>
+							<span class="unitate">H : 00</span>
 						</div>
 					</div>
 				{:else}
@@ -322,84 +322,93 @@
 
 <style>
 	/* Panel layout */
-	.notifications-panel { display: flex; flex-direction: column; gap: 2rem; }
-	.bara-actiuni { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-	.tabs-stanga { display: flex; align-items: center; gap: 1.2rem; }
-	.tabs { display: flex; gap: 0.4rem; background: #f1f3f5; padding: 0.4rem; border-radius: 12px; }
-	.tab-item {
-		background: none; border: none; padding: 0.8rem 1.6rem;
-		font-size: 1.4rem; font-weight: 600; color: #666; cursor: pointer;
+	.notifications-panel { display: flex; flex-direction: column; gap: 2.4rem; }
+	.bara-actiuni { display: flex; align-items: center; justify-content: space-between; gap: 1.6rem; flex-wrap: wrap; }
+	.tabs-stanga { display: flex; align-items: center; gap: 2rem; }
+	
+	.tabs-intern-notif { display: flex; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--border); gap: 0.5rem; }
+	
+	.tab-item-notif {
+		background: none; border: none; padding: 0.8rem 2rem;
+		font-size: 1.4rem; font-weight: 700; color: var(--text-grey); cursor: pointer;
 		border-radius: 8px; transition: all 0.2s; font-family: inherit;
 	}
-	.tab-item:hover { color: var(--dark); background: rgba(255,255,255,0.7); }
-	.tab-item.activ { background: white; color: var(--dark); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-	.contor-notif { font-size: 1.3rem; color: #888; }
-	.buton-nou { display: flex; align-items: center; gap: 0.6rem; }
+	.tab-item-notif:hover:not(.activ) { color: var(--text); background: rgba(255,255,255,0.05); }
+	.tab-item-notif.activ { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+	
+	.contor-notif { font-size: 1.3rem; color: var(--text-grey); font-weight: 600; }
+	.buton-nou { display: flex; align-items: center; gap: 0.8rem; }
 
 	/* Table */
-	.randul-expirat { opacity: 0.5; }
-	.mesaj-preview { display: block; font-size: 1.2rem; color: #888; margin-top: 0.2rem; max-width: 32rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-	.data-celula { font-size: 1.3rem; color: #666; white-space: nowrap; }
-	.td-gol { text-align: center; padding: 4rem; color: #999; }
-	.mai-multe { text-align: center; }
+	.notif-table-container { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden; }
+	
+	.randul-expirat { opacity: 0.6; }
+	.notif-info-celula { display: flex; flex-direction: column; gap: 0.3rem; }
+	.notif-titlu-text { font-size: 1.5rem; color: var(--text); }
+	.mesaj-preview { display: block; font-size: 1.25rem; color: var(--text-grey); max-width: 40rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	
+	.data-celula { font-size: 1.3rem; color: var(--text-grey); font-family: monospace; font-weight: 600; }
+	.td-gol { text-align: center; padding: 8rem; color: var(--text-grey); font-size: 1.6rem; font-style: italic; }
+	
+	.mai-multe { text-align: center; margin-top: 1rem; }
+	.load-more-btn { min-width: 25rem; }
 
 	/* Delivery badges */
-	.badge-livrare { padding: 0.4rem 1rem; border-radius: 100px; font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
-	.badge-livrare--activa { background: #d3f9d8; color: #2b8a3e; }
-	.badge-livrare--finalizata { background: #f1f3f5; color: #495057; }
-	.badge-livrare--expirata { background: #fdecea; color: #a93226; }
-	.badge-livrare--programata { background: #fff3cd; color: #a05a00; }
+	.badge-livrare { padding: 0.4rem 1.2rem; border-radius: 100px; font-size: 1.1rem; font-weight: 800; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; }
+	.badge-livrare--activa { background: #2b8a3e; color: white; box-shadow: 0 0 10px rgba(43, 138, 62, 0.4); }
+	.badge-livrare--finalizata { background: var(--bg-dark); color: var(--text-grey); border: 1px solid var(--border); }
+	.badge-livrare--expirata { background: #a93226; color: white; }
+	.badge-livrare--programata { background: #f39c12; color: white; }
 
 	/* Modal */
-	.modal-notif { max-width: 52rem; max-height: 90vh; overflow-y: auto; }
-	.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.4rem; }
-	.modal-header h2 { margin-bottom: 0; }
-	.btn-inchide { background: none; border: none; cursor: pointer; color: #888; padding: 0.4rem; border-radius: 6px; display: flex; }
-	.btn-inchide:hover { background: #f1f3f5; color: var(--dark); }
+	.modal-notif { max-width: 55rem !important; max-height: 90vh; overflow-y: auto; }
+	.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.4rem; border-bottom: 1px solid var(--border); padding-bottom: 1.6rem; }
+	.modal-header h2 { margin-bottom: 0; color: var(--primary); }
 
 	.textarea-notif {
-		width: 100%; height: 8rem; border-radius: 9px; border: 1px solid var(--border);
-		padding: 1rem; font-family: inherit; font-size: 1.4rem; resize: vertical;
+		width: 100%; height: 10rem; border-radius: 10px; border: 1px solid var(--border);
+		padding: 1.2rem; font-family: inherit; font-size: 1.45rem; resize: vertical;
+		background: var(--bg-card); color: var(--text);
 	}
-	.textarea-notif:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(230, 126, 34, 0.1); }
+	.textarea-notif:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-tint); }
 
-	.camp-hint { font-size: 1.2rem; color: #888; margin-top: 0.4rem; }
+	.camp-hint { font-size: 1.2rem; color: var(--text-grey); margin-top: 0.6rem; font-style: italic; }
 
 	/* Recurring toggle row */
 	.rand-repetare {
-		background: var(--primary-tint); border-radius: 9px;
-		padding: 1.2rem 1.6rem; margin-bottom: 2rem;
+		background: var(--bg-dark); border-radius: 12px; border: 1px solid var(--border);
+		padding: 1.6rem 2rem; margin: 2rem 0;
 	}
-	.toggle-label { display: flex; align-items: center; gap: 1rem; cursor: pointer; }
-	.toggle-label input[type="checkbox"] { width: 1.8rem; height: 1.8rem; cursor: pointer; accent-color: var(--primary); }
-	.toggle-text { font-size: 1.4rem; font-weight: 700; color: var(--primary-shade); }
+	.toggle-label { display: flex; align-items: center; gap: 1.2rem; cursor: pointer; }
+	.toggle-label input[type="checkbox"] { width: 2.2rem; height: 2.2rem; cursor: pointer; accent-color: var(--primary); }
+	.toggle-text { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
 
 	/* Recurring hour input */
-	.input-cu-unitate { display: flex; align-items: center; gap: 1rem; }
-	.input-ora { width: 10rem; }
-	.unitate { font-size: 1.6rem; font-weight: 600; color: #555; }
+	.input-cu-unitate { display: flex; align-items: center; gap: 1.2rem; }
+	.input-ora { width: 12rem !important; text-align: center; font-size: 2rem !important; font-weight: 800 !important; color: var(--primary) !important; }
+	.unitate { font-size: 1.8rem; font-weight: 700; color: var(--text-grey); }
 
 	/* Preset buttons */
-	.preset-butoane { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; }
+	.preset-butoane { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 1.2rem; }
 	.btn-preset {
-		padding: 0.6rem 1.2rem; border-radius: 8px; border: 1px solid var(--border);
-		background: white; font-size: 1.3rem; font-weight: 600; color: #555;
+		padding: 0.8rem 1.4rem; border-radius: 10px; border: 1px solid var(--border);
+		background: var(--bg-dark); font-size: 1.35rem; font-weight: 700; color: var(--text);
 		cursor: pointer; transition: all 0.2s; font-family: inherit;
 	}
-	.btn-preset:hover { background: var(--primary-tint); border-color: var(--primary); color: var(--primary); }
+	.btn-preset:hover { border-color: var(--primary); color: var(--primary); background: var(--bg-card); }
 
 	/* Alert boxes */
 	.alerta {
-		display: flex; align-items: flex-start; gap: 0.9rem;
-		padding: 1rem 1.4rem; border-radius: 9px; font-size: 1.3rem;
-		margin-top: 1rem; border-left: 4px solid;
+		display: flex; align-items: flex-start; gap: 1.2rem;
+		padding: 1.4rem 1.8rem; border-radius: 12px; font-size: 1.35rem;
+		margin-top: 1.6rem; border-left: 5px solid;
 	}
-	.alerta svg { flex-shrink: 0; margin-top: 0.1rem; }
-	.alerta--pericol { background: #fdecea; color: #a93226; border-left-color: #a93226; }
-	.alerta--info { background: #fff8e1; color: #a05a00; border-left-color: #e6a817; }
+	.alerta svg { flex-shrink: 0; margin-top: 0.2rem; }
+	.alerta--pericol { background: rgba(169, 50, 38, 0.1); color: #ec7063; border-left-color: #a93226; }
+	.alerta--info { background: rgba(243, 156, 18, 0.1); color: #f5b041; border-left-color: #f39c12; }
 
 	/* Modal buttons */
-	.butoane-modal { display: flex; gap: 1rem; margin-top: 2.4rem; }
+	.butoane-modal { display: flex; gap: 1.2rem; margin-top: 3.2rem; }
 	.butoane-modal .buton-iesire { flex: 1; }
 	.butoane-modal .buton-primar { flex: 2; }
 </style>
