@@ -112,41 +112,52 @@
 </script>
 
 <div class="equipment-manager">
-	<div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2rem;">
-		<button class="buton-primar" onclick={() => deschideEq()}>+ Secțiune Nouă</button>
+	<div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2.4rem;">
+		<button class="buton-primar" onclick={() => deschideEq()}>
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+			Secțiune Nouă
+		</button>
 	</div>
 
 	<div class="equipment-hierarchy">
 		{#each parents as parent}
-			<div class="eq-parent-section" style="background: white; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 3rem; overflow: hidden;">
-				<div class="eq-parent-header" style="background: var(--primary-tint); padding: 1.5rem; display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border);">
-					<div style="display:flex; gap:1.5rem; align-items:center;">
-						{#if parent.image_url}<img src={parent.image_url} alt="" style="height: 5rem; width: 5rem; object-fit: cover; border-radius: 8px;" />{/if}
-						<div>
-							<h3 style="margin:0;">{parent.title}</h3>
-							<small style="color:#666;">{parent.description || 'Fără descriere'}</small>
+			<div class="eq-parent-section">
+				<div class="eq-parent-header">
+					<div class="eq-parent-info">
+						{#if parent.image_url}<img src={parent.image_url} alt="" class="eq-parent-img" />{/if}
+						<div class="eq-parent-titles">
+							<h3>{parent.title}</h3>
+							<p class="eq-parent-desc">{parent.description || 'Fără descriere'}</p>
 						</div>
 					</div>
-					<div style="display:flex; gap:0.5rem;">
-						<button class="buton-primar" style="font-size: 1.2rem; padding: 0.5rem 1rem;" onclick={() => deschideEq(null, parent.id)}>+ Produs</button>
-						<button class="btn-icon" onclick={() => deschideEq(parent)}>✏️</button>
-						<button class="btn-icon btn-sterge" onclick={() => stergeEq(parent.id)}>🗑️</button>
+					<div class="eq-parent-actions">
+						<button class="buton-primar btn-sm" onclick={() => deschideEq(null, parent.id)}>+ Produs</button>
+						<button class="btn-icon" onclick={() => deschideEq(parent)} title="Editează Secțiune">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+						</button>
+						<button class="btn-icon btn-sterge" onclick={() => stergeEq(parent.id)} title="Șterge Secțiune">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+						</button>
 					</div>
 				</div>
-				<div class="eq-sub-items" style="padding: 1.5rem; display:grid; grid-template-columns: repeat(auto-fill, minmax(25rem, 1fr)); gap: 1rem;">
+				<div class="eq-sub-items">
 					{#each echipament.filter((e) => e.parent_id === parent.id) as sub}
-						<div class="stat-card" style="flex-direction: row; gap: 1rem; align-items: center; padding: 1rem; background: #fdfdfd;">
-							{#if sub.image_url}<img src={sub.image_url} alt="" style="height: 6rem; width: 6rem; object-fit: cover; border-radius: 6px;" />{/if}
-							<div style="flex: 1;">
-								<h4 style="margin:0; font-size: 1.4rem;">{sub.title}</h4>
-								<div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
-									<button class="btn-icon" style="padding:0.3rem;" onclick={() => deschideEq(sub)}>✏️</button>
-									<button class="btn-icon btn-sterge" style="padding:0.3rem;" onclick={() => stergeEq(sub.id)}>🗑️</button>
+						<div class="eq-sub-card">
+							{#if sub.image_url}<img src={sub.image_url} alt="" class="eq-sub-img" />{/if}
+							<div class="eq-sub-info">
+								<h4>{sub.title}</h4>
+								<div class="eq-sub-actions">
+									<button class="btn-icon btn-xs" onclick={() => deschideEq(sub)}>
+										<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+									</button>
+									<button class="btn-icon btn-sterge btn-xs" onclick={() => stergeEq(sub.id)}>
+										<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+									</button>
 								</div>
 							</div>
 						</div>
 					{:else}
-						<p style="grid-column: 1/-1; text-align: center; color: #bbb; font-style: italic;">Niciun produs adăugat.</p>
+						<p class="empty-state">Niciun produs adăugat în această secțiune.</p>
 					{/each}
 				</div>
 			</div>
@@ -172,8 +183,21 @@
 					<div class="camp"><label>Ordine</label><input type="number" bind:value={eqCurent.order} /></div>
 				</div>
 
-				<div class="camp"><label>Imagine</label><input type="file" accept="image/*" onchange={onFileSelected} /></div>
-				{#if eqCurent.image_url}<img src={eqCurent.image_url} alt="" style="width:100%; height:12rem; object-fit:cover; border-radius:8px; margin-bottom:1rem;" />{/if}
+				<div class="camp">
+					<label>Imagine</label>
+					<div class="upload-zone-wrapper">
+						<input type="file" accept="image/*" onchange={onFileSelected} id="eq-file" style="display:none" />
+						<label for="eq-file" class="buton-iesire" style="display:inline-block; width:100%; text-align:center; padding: 2rem; border-style: dashed; cursor: pointer;">
+							{eqCurent.image_url ? 'Schimbă Imaginea' : 'Apasă pentru a încărca imagine'}
+						</label>
+					</div>
+				</div>
+				
+				{#if eqCurent.image_url}
+					<div style="margin-bottom: 2rem;">
+						<img src={eqCurent.image_url} alt="" style="width:100%; height:16rem; object-fit:cover; border-radius:12px; border: 1px solid var(--border);" />
+					</div>
+				{/if}
 
 				<div style="display:flex; gap: 1rem; margin-top: 2rem;">
 					<button type="button" class="buton-iesire" style="flex: 1" onclick={() => (showEqModal = false)}>Anulează</button>
@@ -198,3 +222,126 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	.eq-parent-section {
+		background: var(--bg-card);
+		border-radius: 16px;
+		border: 1px solid var(--border);
+		margin-bottom: 3.2rem;
+		overflow: hidden;
+		box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+	}
+
+	.eq-parent-header {
+		background: linear-gradient(to right, var(--primary-tint), transparent);
+		padding: 2rem 2.4rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.eq-parent-info {
+		display: flex;
+		gap: 2rem;
+		align-items: center;
+	}
+
+	.eq-parent-img {
+		height: 6rem;
+		width: 6rem;
+		object-fit: cover;
+		border-radius: 12px;
+		border: 1px solid var(--border-strong);
+	}
+
+	.eq-parent-titles h3 {
+		font-size: 1.8rem;
+		color: var(--primary);
+		margin: 0;
+		font-weight: 700;
+	}
+
+	.eq-parent-desc {
+		font-size: 1.3rem;
+		color: var(--text-grey);
+		margin: 0.2rem 0 0 0;
+	}
+
+	.eq-parent-actions {
+		display: flex;
+		gap: 0.8rem;
+		align-items: center;
+	}
+
+	.eq-sub-items {
+		padding: 2rem 2.4rem;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(28rem, 1fr));
+		gap: 1.6rem;
+		background: rgba(0,0,0,0.15);
+	}
+
+	.eq-sub-card {
+		background: var(--bg-dark);
+		border-radius: 12px;
+		border: 1px solid var(--border);
+		padding: 1.2rem;
+		display: flex;
+		gap: 1.2rem;
+		align-items: center;
+		transition: all 0.2s;
+	}
+
+	.eq-sub-card:hover {
+		border-color: var(--primary);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+	}
+
+	.eq-sub-img {
+		height: 6.4rem;
+		width: 6.4rem;
+		object-fit: cover;
+		border-radius: 8px;
+		background: var(--bg-card);
+	}
+
+	.eq-sub-info {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.eq-sub-info h4 {
+		font-size: 1.4rem;
+		font-weight: 600;
+		color: var(--text);
+		margin: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.eq-sub-actions {
+		margin-top: 0.6rem;
+		display: flex;
+		gap: 0.6rem;
+	}
+
+	.btn-sm { padding: 0.6rem 1.2rem; font-size: 1.25rem; }
+	.btn-xs { padding: 0.4rem; }
+
+	.empty-state {
+		grid-column: 1/-1;
+		text-align: center;
+		color: var(--text-grey);
+		font-style: italic;
+		padding: 2rem;
+		font-size: 1.3rem;
+	}
+
+	.upload-zone-wrapper {
+		margin-bottom: 1.6rem;
+	}
+</style>

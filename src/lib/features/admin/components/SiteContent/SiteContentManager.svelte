@@ -88,26 +88,28 @@
 </script>
 
 <div class="site-content-manager">
-	<p style="color:#666; font-size:1.3rem; margin-bottom:2rem;">Editează imaginile și textele principale ale aplicației.</p>
+	<p class="subtitle-text">Gerează imaginile de tip "Hero" și textele principale ale paginilor din aplicația mobilă.</p>
 
-	<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(30rem, 1fr)); gap: 2rem;">
+	<div class="site-grid">
 		{#each continutSite.filter((s: any) => ['home_hero', 'services_hero', 'events_hero'].includes(s.section_id)) as sec}
 			{@const previewImg = sec.content?.image || sec.images?.[0] || null}
-			<div style="background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.02);">
+			<div class="site-card">
 				{#if previewImg}
-					<img src={previewImg} alt="" style="width:100%; height:15rem; object-fit:cover;" />
+					<img src={previewImg} alt="" class="site-card-img" />
 				{:else}
-					<div style="width:100%; height:15rem; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#ccc;">Fără imagine</div>
+					<div class="site-card-no-img">Fără imagine</div>
 				{/if}
-				<div style="padding: 1.5rem;">
-					<code style="background:var(--primary-tint); color:var(--primary); padding:0.2rem 0.6rem; border-radius:4px; font-size:1.1rem;">{sec.section_id}</code>
-					<h4 style="margin: 0.8rem 0 0.4rem; font-size:1.6rem;">{sec.title || '(fără titlu)'}</h4>
-					<p style="font-size:1.2rem; color:#888; margin-bottom:1.5rem;">{sec.description?.slice(0, 100) || 'Fără descriere...'}</p>
+				<div class="site-card-body">
+					<code class="section-id-code">{sec.section_id}</code>
+					<h4 class="site-card-title">{sec.title || '(fără titlu)'}</h4>
+					<p class="site-card-desc">{sec.description?.slice(0, 100) || 'Fără descriere...'}</p>
 
-					<div style="display:flex; gap:0.5rem;">
-						<button class="btn-icon" style="flex:1;" onclick={() => deschideSiteSectiune(sec)}>✏️</button>
-						<label class="btn-icon" style="flex:1; background:#27ae60; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer;">
-							📷
+					<div class="site-card-actions">
+						<button class="btn-icon" onclick={() => deschideSiteSectiune(sec)} title="Editează Text">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+						</button>
+						<label class="btn-icon btn-upload" title="Încarcă Imagine Nouă">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
 							<input type="file" style="display:none;" onchange={(e) => onFileSelected(e, sec.section_id)} />
 						</label>
 					</div>
@@ -116,6 +118,33 @@
 		{/each}
 	</div>
 </div>
+
+<style>
+	.subtitle-text { color: var(--text-grey); font-size: 1.4rem; margin-bottom: 2.4rem; font-weight: 500; }
+	.site-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr)); gap: 2.4rem; }
+	
+	.site-card {
+		background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);
+		overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.2s;
+	}
+	.site-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+	
+	.site-card-img { width: 100%; height: 18rem; object-fit: cover; border-bottom: 1px solid var(--border); }
+	.site-card-no-img { width: 100%; height: 18rem; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; color: var(--text-grey); font-style: italic; border-bottom: 1px solid var(--border); }
+	
+	.site-card-body { padding: 2rem; }
+	
+	.section-id-code { background: var(--bg-dark); color: var(--primary); padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 1.1rem; font-family: monospace; font-weight: 700; border: 1px solid var(--border); }
+	
+	.site-card-title { margin: 1.2rem 0 0.6rem; font-size: 1.8rem; color: var(--text); font-weight: 700; }
+	.site-card-desc { font-size: 1.3rem; color: var(--text-grey); margin-bottom: 2rem; line-height: 1.5; }
+	
+	.site-card-actions { display: flex; gap: 0.8rem; }
+	.site-card-actions button, .site-card-actions label { flex: 1; height: 3.8rem; border-radius: 8px; }
+	
+	.btn-upload { background: rgba(39, 174, 96, 0.1); color: #27ae60; border: 1px solid rgba(39, 174, 96, 0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+	.btn-upload:hover { background: rgba(39, 174, 96, 0.2); border-color: #27ae60; }
+</style>
 
 {#if showSiteModal}
 	<div class="modal-overlay">

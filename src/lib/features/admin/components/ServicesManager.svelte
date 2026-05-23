@@ -156,28 +156,43 @@
 </script>
 
 <div class="services-manager">
-    <div class="tabs-intern" style="display:flex; gap:1rem; margin-bottom:2rem;">
-        <button class="tab-item" class:activ={subSectiune === 'servicii'} onclick={() => subSectiune = 'servicii'}>🛠️ Servicii</button>
-        <button class="tab-item" class:activ={subSectiune === 'parteneri'} onclick={() => subSectiune = 'parteneri'}>🤝 Parteneri</button>
+    <div class="tabs-intern-servicii">
+        <button class="tab-item-srv" class:activ={subSectiune === 'servicii'} onclick={() => subSectiune = 'servicii'}>
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.6rem;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+			Servicii
+		</button>
+        <button class="tab-item-srv" class:activ={subSectiune === 'parteneri'} onclick={() => subSectiune = 'parteneri'}>
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.6rem;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+			Parteneri
+		</button>
     </div>
 
     {#if subSectiune === 'servicii'}
-        <div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2rem;">
-            <button class="buton-primar" onclick={() => deschideServiciu()}>+ Serviciu Nou</button>
+        <div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2.4rem;">
+            <button class="buton-primar" onclick={() => deschideServiciu()}>
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+				Serviciu Nou
+			</button>
         </div>
-        <div class="table-scroll" style="background: white; border-radius: 12px; border: 1px solid var(--border);">
+        <div class="table-scroll srv-table-container">
             <table>
                 <thead><tr><th>Img</th><th>Titlu</th><th>Preț</th><th>Categorie</th><th>Acțiuni</th></tr></thead>
                 <tbody>
                     {#each servicii as s}
                         <tr>
-                            <td><img src={s.image_url} alt="" style="height:3.6rem; border-radius:4px;" /></td>
-                            <td><strong>{s.title}</strong></td>
-                            <td>{s.price} {s.price_label}</td>
-                            <td>{s.category}</td>
+                            <td class="col-img"><img src={s.image_url} alt="" class="srv-img-thumb" /></td>
+                            <td><strong class="srv-name">{s.title}</strong></td>
+                            <td class="col-price">{s.price} {s.price_label || 'RON'}</td>
+                            <td><span class="badge-tip">{s.category}</span></td>
                             <td>
-                                <button class="btn-icon" onclick={() => deschideServiciu(s)}>✏️</button>
-                                <button class="btn-icon btn-sterge" onclick={() => stergeElement('services', s.id)}>🗑️</button>
+								<div class="actiuni-celula">
+									<button class="btn-icon" onclick={() => deschideServiciu(s)} title="Editează">
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+									</button>
+									<button class="btn-icon btn-sterge" onclick={() => stergeElement('services', s.id)} title="Șterge">
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+									</button>
+								</div>
                             </td>
                         </tr>
                     {/each}
@@ -185,22 +200,31 @@
             </table>
         </div>
     {:else}
-        <div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2rem;">
-            <button class="buton-primar" onclick={() => deschidePartner()}>+ Partener Nou</button>
+        <div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2.4rem;">
+            <button class="buton-primar" onclick={() => deschidePartner()}>
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+				Partener Nou
+			</button>
         </div>
-        <div class="table-scroll" style="background: white; border-radius: 12px; border: 1px solid var(--border);">
+        <div class="table-scroll srv-table-container">
             <table>
                 <thead><tr><th>Img</th><th>Nume</th><th>Website</th><th>Ordine</th><th>Acțiuni</th></tr></thead>
                 <tbody>
                     {#each parteneri as p}
                         <tr>
-                            <td><img src={p.image_url} alt="" style="height:3.6rem; border-radius:4px;" /></td>
-                            <td><strong>{p.name}</strong></td>
-                            <td><a href={p.website} target="_blank">{p.website}</a></td>
-                            <td>{p.order}</td>
+                            <td class="col-img"><img src={p.image_url} alt="" class="srv-img-thumb" /></td>
+                            <td><strong class="srv-name">{p.name}</strong></td>
+                            <td><a href={p.website} target="_blank" class="srv-link">{p.website}</a></td>
+                            <td style="text-align:center;"><span class="badge-count">{p.order}</span></td>
                             <td>
-                                <button class="btn-icon" onclick={() => deschidePartner(p)}>✏️</button>
-                                <button class="btn-icon btn-sterge" onclick={() => stergeElement('partners', p.id)}>🗑️</button>
+								<div class="actiuni-celula">
+									<button class="btn-icon" onclick={() => deschidePartner(p)} title="Editează">
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+									</button>
+									<button class="btn-icon btn-sterge" onclick={() => stergeElement('partners', p.id)} title="Șterge">
+										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+									</button>
+								</div>
                             </td>
                         </tr>
                     {/each}
@@ -213,7 +237,7 @@
 {#if showServModal}
 	<div class="modal-overlay">
 		<div class="login-card modal-serviciu">
-			<h2>{editMode ? 'Editează' : 'Adaugă'} Serviciu</h2>
+			<h2 style="margin-bottom: 2.4rem;">{editMode ? 'Editează' : 'Adaugă'} Serviciu</h2>
 			<form onsubmit={salveazaServiciu}>
 
 				<!-- Secțiunea 1: Informații de bază -->
@@ -382,9 +406,9 @@
 					</div>
 				</div>
 
-				<div style="display:flex; gap:1rem; margin-top:2rem;">
+				<div style="display:flex; gap:1.2rem; margin-top:2.4rem;">
 					<button type="button" class="buton-iesire" style="flex:1" onclick={() => (showServModal = false)}>Anulează</button>
-					<button type="submit" class="buton-primar" style="flex:2">Salvează</button>
+					<button type="submit" class="buton-primar" style="flex:2">Salvează Serviciu</button>
 				</div>
 			</form>
 		</div>
@@ -409,66 +433,83 @@
 {/if}
 
 {#if showPartnerModal}
-	<div class="modal-overlay"><div class="login-card" style="max-width: 50rem;">
+	<div class="modal-overlay"><div class="login-card" style="max-width: 55rem;">
         <h2>{editMode ? 'Editează' : 'Adaugă'} Partener</h2>
         <form onsubmit={salveazaPartener}>
-            <div class="camp"><label>Nume</label><input bind:value={partenerCurent.name} required /></div>
-            <div class="camp"><label>Website URL</label><input type="url" bind:value={partenerCurent.website} /></div>
-            <div style="display:flex; gap:1rem; margin-top:2rem;"><button type="button" class="buton-iesire" style="flex:1" onclick={() => (showPartnerModal = false)}>Anulează</button><button type="submit" class="buton-primar" style="flex:2">Salvează</button></div>
+            <div class="camp"><label>Nume Partener</label><input bind:value={partenerCurent.name} required /></div>
+            <div class="camp"><label>Website URL</label><input type="url" bind:value={partenerCurent.website} placeholder="https://..." /></div>
+            <div style="display:flex; gap:1.2rem; margin-top:2.4rem;">
+				<button type="button" class="buton-iesire" style="flex:1" onclick={() => (showPartnerModal = false)}>Anulează</button>
+				<button type="submit" class="buton-primar" style="flex:2">Salvează Partener</button>
+			</div>
         </form>
     </div></div>
 {/if}
 
 <style>
-	.tab-item { background: none; border: none; padding: 1.2rem 2rem; font-size: 1.5rem; font-weight: 500; color: #777; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; font-family: inherit; }
-	.tab-item.activ { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+	.tabs-intern-servicii { display: flex; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--border); gap: 0.5rem; margin-bottom: 2.4rem; width: fit-content; }
+	
+	.tab-item-srv {
+		background: none; border: none; padding: 1rem 2.4rem; font-size: 1.45rem; font-weight: 700; color: var(--text-grey); cursor: pointer; border-radius: 8px; transition: all 0.2s; font-family: inherit; display: flex; align-items: center;
+	}
+	.tab-item-srv.activ { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid var(--border); }
+	.tab-item-srv:hover:not(.activ) { background: rgba(255,255,255,0.05); color: var(--text); }
+
+	.srv-table-container { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden; }
+
+	.srv-img-thumb { height: 4.4rem; width: 4.4rem; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-strong); }
+	.srv-name { font-size: 1.5rem; color: var(--text); }
+	.col-price { font-weight: 700; color: var(--primary); font-size: 1.5rem; }
+	.badge-tip { background: var(--primary-tint); color: var(--primary); padding: 0.2rem 0.8rem; border-radius: 4px; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(197, 160, 48, 0.2); }
+	.badge-count { background: var(--bg-dark); padding: 0.3rem 0.8rem; border-radius: 4px; font-weight: 700; font-size: 1.2rem; }
+	.srv-link { color: var(--accent-blue); text-decoration: none; font-size: 1.3rem; }
+	.srv-link:hover { text-decoration: underline; }
+	.actiuni-celula { display: flex; gap: 0.6rem; }
 
 	/* Modal serviciu */
-	.modal-serviciu { max-width: 72rem; max-height: 90vh; overflow-y: auto; }
+	.modal-serviciu { max-width: 75rem !important; max-height: 90vh; overflow-y: auto; }
 
-	.sectiune-form { border: 1px solid var(--border); border-radius: 10px; padding: 1.8rem 2rem; margin-bottom: 2rem; }
-	.sectiune-titlu { font-size: 1.3rem; font-weight: 700; color: var(--primary); margin-bottom: 1.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+	.sectiune-form { border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2.4rem; background: var(--bg-dark); }
+	.sectiune-titlu { font-size: 1.2rem; font-weight: 800; color: var(--primary); margin-bottom: 1.6rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.9; }
 
-	.form-row-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.4rem; }
+	.form-row-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.6rem; }
+	.form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; }
 
-	.hint { font-size: 1.1rem; color: #999; font-weight: 400; }
+	.hint { font-size: 1.15rem; color: var(--text-grey); font-weight: 400; font-style: italic; }
 
-	textarea { width: 100%; padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 1.4rem; resize: vertical; }
-	textarea:focus { outline: none; border-color: var(--primary); }
-
-	select { width: 100%; padding: 1rem 1.2rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 1.4rem; background: white; }
-	select:focus { outline: none; border-color: var(--primary); }
+	textarea, input:not([type="checkbox"]), select { width: 100%; padding: 1.2rem; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 1.45rem; background: var(--bg-card); color: var(--text); }
+	textarea:focus, input:not([type="checkbox"]):focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-tint); }
 
 	/* Toggle switch */
-	.camp-toggle { display: flex; flex-direction: column; gap: 0.8rem; }
-	.toggle { position: relative; display: inline-block; width: 5rem; height: 2.6rem; }
+	.camp-toggle { display: flex; flex-direction: column; gap: 0.8rem; align-items: flex-start; }
+	.toggle { position: relative; display: inline-block; width: 5.2rem; height: 2.8rem; }
 	.toggle input { opacity: 0; width: 0; height: 0; }
-	.slider { position: absolute; inset: 0; background: #ccc; border-radius: 3rem; cursor: pointer; transition: 0.3s; }
-	.slider::before { content: ''; position: absolute; height: 2rem; width: 2rem; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+	.slider { position: absolute; inset: 0; background: var(--border-strong); border-radius: 3rem; cursor: pointer; transition: 0.3s; }
+	.slider::before { content: ''; position: absolute; height: 2rem; width: 2rem; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
 	input:checked + .slider { background: var(--primary); }
 	input:checked + .slider::before { transform: translateX(2.4rem); }
 
 	/* Array inputs */
 	.array-input { display: flex; gap: 0.8rem; }
 	.array-input input { flex: 1; }
-	.btn-adauga { padding: 0 1.6rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 2rem; cursor: pointer; line-height: 1; }
+	.btn-adauga { padding: 0 1.8rem; background: var(--primary); color: var(--bg-dark); border: none; border-radius: 10px; font-size: 2.2rem; cursor: pointer; line-height: 1; font-weight: 800; }
 
-	.chips { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
-	.chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 1rem; background: #f0f0f0; border-radius: 2rem; font-size: 1.3rem; }
-	.chip button { background: none; border: none; cursor: pointer; font-size: 1.4rem; color: #888; padding: 0; line-height: 1; }
-	.chip button:hover { color: #c00; }
-	.chip-img { padding: 0.3rem 0.8rem; }
-	.chip-img img { height: 2.4rem; width: 3.6rem; object-fit: cover; border-radius: 3px; }
+	.chips { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 1rem; }
+	.chip { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.5rem 1.2rem; background: var(--bg-card); border-radius: 8px; font-size: 1.3rem; border: 1px solid var(--border); font-weight: 600; }
+	.chip button { background: none; border: none; cursor: pointer; font-size: 1.8rem; color: var(--text-grey); padding: 0; line-height: 1; display: flex; align-items: center; }
+	.chip button:hover { color: var(--danger); }
+	.chip-img { padding: 0.4rem; }
+	.chip-img img { height: 3.2rem; width: 4.8rem; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
 
 	/* Upload zone */
-	.upload-zone { display: block; position: relative; border: 2px dashed var(--border); border-radius: 10px; cursor: pointer; overflow: hidden; transition: border-color 0.2s; }
-	.upload-zone:hover { border-color: var(--primary); }
-	.upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.4rem; color: #999; font-size: 1.4rem; text-align: center; }
-	.upload-placeholder small { font-size: 1.1rem; color: #bbb; }
-	.upload-icon { font-size: 2.8rem; }
-	.upload-zone-sm .upload-placeholder, .upload-zone-sm { padding: 1.4rem; }
-	.upload-zone-sm { display: flex; align-items: center; gap: 1rem; font-size: 1.3rem; color: #888; }
-	.img-preview-full { display: block; width: 100%; max-height: 18rem; object-fit: cover; }
-	.upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 600; opacity: 0; transition: opacity 0.2s; }
+	.upload-zone { display: block; position: relative; border: 2px dashed var(--border-strong); border-radius: 14px; cursor: pointer; overflow: hidden; transition: all 0.2s; background: var(--bg-card); }
+	.upload-zone:hover { border-color: var(--primary); background: var(--primary-tint); }
+	.upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 3.2rem; color: var(--text-grey); font-size: 1.45rem; text-align: center; }
+	.upload-placeholder small { font-size: 1.2rem; opacity: 0.7; }
+	.upload-icon { font-size: 3.2rem; }
+	.upload-zone-sm .upload-placeholder, .upload-zone-sm { padding: 1.6rem; }
+	.upload-zone-sm { display: flex; align-items: center; gap: 1.2rem; font-size: 1.35rem; color: var(--text-grey); font-weight: 600; }
+	.img-preview-full { display: block; width: 100%; max-height: 22rem; object-fit: cover; }
+	.upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(4px); }
 	.upload-zone:hover .upload-overlay { opacity: 1; }
 </style>

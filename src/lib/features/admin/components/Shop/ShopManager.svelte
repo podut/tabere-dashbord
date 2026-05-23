@@ -143,61 +143,168 @@
 </script>
 
 <div class="shop-manager">
-	<div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2rem;">
-		<button class="buton-primar" onclick={() => deschideProdus()}>+ Produs Nou</button>
+	<div class="actiuni-pagina" style="display:flex; justify-content: flex-end; margin-bottom: 2.4rem;">
+		<button class="buton-primar" onclick={() => deschideProdus()}>
+			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+			Produs Nou
+		</button>
 	</div>
 
-	<div class="table-scroll" style="background: white; border-radius: 12px; border: 1px solid var(--border);">
+	<div class="table-scroll shop-table-container">
 		<table>
 			<thead><tr><th>Img</th><th>Nume</th><th>Preț</th><th>Stoc</th><th>Acțiuni</th></tr></thead>
 			<tbody>
 				{#each produse as p}
 					<tr>
-						<td><img src={p.image_url} alt="" style="height:3.6rem; width:3.6rem; object-fit:cover; border-radius:4px;" /></td>
-						<td><strong>{p.name}</strong></td>
-						<td>{p.price} lei</td>
-						<td>{p.stock}</td>
-						<td style="display:flex; gap:0.5rem;">
-							<button class="btn-icon" style="background:#27ae60; color:white; border:none;" onclick={() => { produsCurent = { ...p, images: p.images || [] }; showProdGalModal = true; }} title="Galerie">🖼️</button>
-							<button class="btn-icon" onclick={() => deschideProdus(p)} title="Editează">✏️</button>
-							<button class="btn-icon btn-sterge" onclick={() => stergeProdus(p.id)} title="Șterge">🗑️</button>
+						<td class="col-img"><img src={p.image_url} alt="" class="prod-img-thumb" /></td>
+						<td><strong class="prod-name">{p.name}</strong></td>
+						<td class="col-price">{p.price} {p.currency || 'lei'}</td>
+						<td class="col-stock"><span class="stock-badge" class:low-stock={p.stock <= 5}>{p.stock}</span></td>
+						<td>
+							<div class="actiuni-celula">
+								<button class="btn-icon btn-galerie" onclick={() => { produsCurent = { ...p, images: p.images || [] }; showProdGalModal = true; }} title="Galerie">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+								</button>
+								<button class="btn-icon" onclick={() => deschideProdus(p)} title="Editează">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+								</button>
+								<button class="btn-icon btn-sterge" onclick={() => stergeProdus(p.id)} title="Șterge">
+									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+								</button>
+							</div>
 						</td>
 					</tr>
 				{:else}
-					<tr><td colspan="5" style="text-align:center; padding: 4rem; color: #999;">Niciun produs în magazin.</td></tr>
+					<tr><td colspan="5" class="td-gol">Niciun produs în magazin.</td></tr>
 				{/each}
 			</tbody>
 		</table>
 	</div>
 </div>
 
+<style>
+	.shop-table-container {
+		background: var(--bg-card);
+		border-radius: 16px;
+		border: 1px solid var(--border);
+		box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+		overflow: hidden;
+	}
+
+	.prod-img-thumb {
+		height: 4.8rem;
+		width: 4.8rem;
+		object-fit: cover;
+		border-radius: 8px;
+		border: 1px solid var(--border-strong);
+	}
+
+	.prod-name { font-size: 1.5rem; color: var(--text); }
+	.col-price { font-weight: 700; color: var(--primary); font-size: 1.5rem; }
+	.col-stock { text-align: center; }
+	
+	.stock-badge {
+		background: var(--bg-dark);
+		color: var(--text);
+		padding: 0.4rem 1.2rem;
+		border-radius: 6px;
+		font-weight: 700;
+		border: 1px solid var(--border);
+	}
+
+	.stock-badge.low-stock {
+		color: var(--danger);
+		border-color: var(--danger);
+		background: var(--danger-tint);
+	}
+
+	.actiuni-celula { display: flex; gap: 0.6rem; }
+	.btn-galerie { color: var(--accent-blue); border-color: rgba(52, 152, 219, 0.3); }
+	.btn-galerie:hover { background: rgba(52, 152, 219, 0.1); border-color: var(--accent-blue); }
+
+	.td-gol { text-align: center; padding: 6rem; color: var(--text-grey); font-size: 1.5rem; font-style: italic; }
+
+	.galerie-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+		gap: 1.6rem;
+		padding: 1.6rem;
+		background: rgba(0,0,0,0.2);
+		border-radius: 12px;
+	}
+
+	.foto-card-prod {
+		position: relative;
+		border-radius: 12px;
+		overflow: hidden;
+		border: 1px solid var(--border);
+		aspect-ratio: 1/1;
+	}
+
+	.foto-card-prod img { width: 100%; height: 100%; object-fit: cover; }
+
+	.btn-sterge-foto {
+		position: absolute;
+		top: 0.8rem;
+		right: 0.8rem;
+		background: var(--danger);
+		color: white;
+		border: none;
+		border-radius: 50%;
+		width: 2.8rem;
+		height: 2.8rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		font-size: 1.8rem;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+		transition: all 0.2s;
+	}
+
+	.btn-sterge-foto:hover { transform: scale(1.1); background: #c0392b; }
+</style>
+
 <!-- MODAL PRODUS -->
 {#if showProdModal}
 	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 50rem; max-height: 90vh; overflow-y: auto;">
+		<div class="login-card" style="max-width: 55rem; max-height: 90vh; overflow-y: auto;">
 			<h2>{editMode ? 'Editează' : 'Adaugă'} Produs</h2>
 			<form onsubmit={salveazaProdus}>
-				<div class="camp"><label>Nume</label><input bind:value={produsCurent.name} required /></div>
-				<div class="camp"><label>Imagine Principală</label><input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'product')} /></div>
+				<div class="camp"><label>Nume Produs</label><input bind:value={produsCurent.name} required /></div>
+				
+				<div class="camp">
+					<label>Imagine Principală</label>
+					<div class="upload-zone-wrapper" style="margin-bottom: 1.6rem;">
+						<input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'product')} id="prod-file" style="display:none" />
+						<label for="prod-file" class="buton-iesire" style="display:inline-block; width:100%; text-align:center; padding: 2.4rem; border-style: dashed; cursor: pointer;">
+							{produsCurent.image_url ? 'Schimbă Imaginea' : 'Încarcă Imagine Produs'}
+						</label>
+					</div>
+				</div>
+
 				{#if produsCurent.image_url}
-					<img src={produsCurent.image_url} alt="" style="width:100%; height:12rem; object-fit:cover; border-radius:8px; margin-bottom:1rem;" />
+					<div style="margin-bottom: 2.4rem;">
+						<img src={produsCurent.image_url} alt="" style="width:100%; height:18rem; object-fit:cover; border-radius:12px; border: 1px solid var(--border);" />
+					</div>
 				{/if}
-				<div class="camp"><label>Descriere scurtă</label><input bind:value={produsCurent.description} /></div>
-				<div class="camp"><label>Descriere Detaliată</label><textarea bind:value={produsCurent.full_desc} style="width:100%; height:10rem; border-radius:9px; border:1px solid var(--border); padding:1rem; resize:vertical;"></textarea></div>
+
+				<div class="camp"><label>Descriere Scurtă</label><input bind:value={produsCurent.description} placeholder="Apare în lista de produse" /></div>
+				<div class="camp"><label>Descriere Detaliată</label><textarea bind:value={produsCurent.full_desc} style="width:100%; height:12rem; border-radius:9px; border:1px solid var(--border); padding:1rem; resize:vertical; font-family:inherit;"></textarea></div>
 				
 				<div class="form-row-2col">
-					<div class="camp"><label>Preț (lei)</label><input type="number" bind:value={produsCurent.price} required /></div>
-					<div class="camp"><label>Stoc</label><input type="number" bind:value={produsCurent.stock} required /></div>
+					<div class="camp"><label>Preț (RON)</label><input type="number" bind:value={produsCurent.price} required step="0.01" /></div>
+					<div class="camp"><label>Stoc Disponibil</label><input type="number" bind:value={produsCurent.stock} required /></div>
 				</div>
 
 				<div class="camp">
 					<label>Mărimi (separate prin virgulă)</label>
-					<input value={produsCurent.sizes?.join(', ')} onchange={(e) => produsCurent.sizes = e.currentTarget.value.split(',').map(s => s.trim()).filter(s => s)} />
+					<input placeholder="ex: S, M, L, XL" value={produsCurent.sizes?.join(', ')} onchange={(e) => produsCurent.sizes = e.currentTarget.value.split(',').map(s => s.trim()).filter(s => s)} />
 				</div>
 
-				<div style="display:flex; gap:1rem; margin-top:2rem;">
+				<div style="display:flex; gap:1.2rem; margin-top:2.4rem;">
 					<button type="button" class="buton-iesire" style="flex:1" onclick={() => (showProdModal = false)}>Anulează</button>
-					<button type="submit" class="buton-primar" style="flex:2" disabled={saving}>{saving ? 'Se salvează...' : 'Salvează'}</button>
+					<button type="submit" class="buton-primar" style="flex:2" disabled={saving}>{saving ? 'Se salvează...' : 'Salvează Produs'}</button>
 				</div>
 			</form>
 		</div>
@@ -207,19 +314,30 @@
 <!-- MODAL GALERIE PRODUS -->
 {#if showProdGalModal}
 	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 80rem; max-height: 85vh; display: flex; flex-direction: column;">
-			<div style="display:flex; justify-content:space-between; margin-bottom:2rem;">
-				<h2>Galerie Produs: {produsCurent.name}</h2>
-				<button class="buton-iesire" onclick={() => showProdGalModal = false}>Închide</button>
+		<div class="login-card" style="max-width: 85rem; max-height: 85vh; display: flex; flex-direction: column;">
+			<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2.4rem; border-bottom: 1px solid var(--border); padding-bottom: 1.6rem;">
+				<h2 style="margin:0;">Galerie: <span style="color:var(--primary);">{produsCurent.name}</span></h2>
+				<button class="btn-icon" onclick={() => showProdGalModal = false} style="font-size: 2rem;">×</button>
 			</div>
-			<div class="camp"><label>Încarcă poze noi (1:1)</label><input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'product_gallery')} /></div>
-			<div class="galerie-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 1rem; overflow-y: auto; flex: 1;">
+			
+			<div class="camp">
+				<label>Adaugă imagini noi în galerie</label>
+				<input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'product_gallery')} />
+			</div>
+
+			<div class="galerie-grid">
 				{#each produsCurent.images || [] as url}
-					<div class="foto-card" style="position:relative;">
-						<img src={url} alt="" style="width:100%; height:14rem; object-fit:cover; border-radius:8px;" />
-						<button class="btn-sterge-foto" style="position:absolute; top:0.5rem; right:0.5rem; background:rgba(231,76,60,0.8); color:white; border:none; border-radius:50%; width:2.4rem; height:2.4rem;" onclick={() => stergeFotoProdus(url)}>×</button>
+					<div class="foto-card-prod">
+						<img src={url} alt="" />
+						<button class="btn-sterge-foto" onclick={() => stergeFotoProdus(url)}>×</button>
 					</div>
+				{:else}
+					<p class="td-gol" style="grid-column: 1/-1;">Nicio imagine în galerie.</p>
 				{/each}
+			</div>
+			
+			<div style="margin-top: 2.4rem; display: flex; justify-content: flex-end;">
+				<button class="buton-iesire" style="min-width: 15rem;" onclick={() => showProdGalModal = false}>Închide</button>
 			</div>
 		</div>
 	</div>
