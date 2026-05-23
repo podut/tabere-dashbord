@@ -87,6 +87,19 @@
 			]);
 
 			evenimente = ev.data || [];
+			
+			// Auto-finalize passed events
+			const acum = new Date();
+			const evDeFinalizat = evenimente.filter(e => e.status === 'active' && new Date(e.date) < acum);
+			if (evDeFinalizat.length > 0) {
+				await Promise.all(evDeFinalizat.map(e => 
+					supabase.from('events').update({ status: 'finished', active: false }).eq('id', e.id)
+				));
+				// Reload events after update
+				const { data } = await supabase.from('events').select('*').order('date', { ascending: false });
+				evenimente = data || [];
+			}
+
 			produse = prod.data || [];
 			rezervari = rez.data || [];
 			servicii = serv.data || [];
@@ -108,7 +121,20 @@
 	}
 
 	// Granular refreshers passed to components
-	const refreshEvents = async () => { const { data } = await supabase.from('events').select('*').order('date', { ascending: false }); evenimente = data || []; };
+	const refreshEvents = async () => { 
+		const { data } = await supabase.from('events').select('*').order('date', { ascending: false }); 
+		let evs = data || [];
+		const acum = new Date();
+		const evDeFinalizat = evs.filter(e => e.status === 'active' && new Date(e.date) < acum);
+		if (evDeFinalizat.length > 0) {
+			await Promise.all(evDeFinalizat.map(e => 
+				supabase.from('events').update({ status: 'finished', active: false }).eq('id', e.id)
+			));
+			const { data: data2 } = await supabase.from('events').select('*').order('date', { ascending: false });
+			evs = data2 || [];
+		}
+		evenimente = evs; 
+	};
 	const refreshProducts = async () => { const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false }); produse = data || []; };
 	const refreshBookings = async () => { const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false }); rezervari = data || []; };
 	const refreshOrders = async () => { const { data } = await supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }); comenzi = data || []; };
@@ -174,7 +200,7 @@
 					<div class="incarcare">Se încarcă datele...</div>
 				{:else}
 					{#if sectiuneActiva === 'evenimente'}
-						<EventsManager bind:evenimente bind:rezervari {refreshEvents} {refreshBookings} />
+						<EventsManager bind:evenimente bind:rezervari {servicii} {refreshEvents} {refreshBookings} />
 					{:else if sectiuneActiva === 'echipament'}
 						<EquipmentManager bind:echipament {refreshEquipment} />
 					{:else if sectiuneActiva === 'produse'}

@@ -19,7 +19,10 @@
 		<thead>
 			<tr>
 				<th>Eveniment</th>
-				<th>Dată</th>
+				<th>Tip</th>
+				<th>Dată / Oră</th>
+				<th>Durată</th>
+				<th>Capacitate</th>
 				<th>Preț</th>
 				<th>Status</th>
 				<th>Acțiuni</th>
@@ -28,9 +31,27 @@
 		<tbody>
 			{#each listaFiltrata as ev}
 				<tr class:eveniment-trecut={new Date(ev.date) < acum && ev.status === 'active'}>
-					<td><strong>{ev.title}</strong></td>
-					<td>{new Date(ev.date).toLocaleDateString('ro-RO')}</td>
-					<td>{ev.price} lei</td>
+					<td>
+						<div class="info-ev">
+							<strong class="titlu-ev">{ev.title}</strong>
+							<span class="locatie-ev">{ev.location}</span>
+						</div>
+					</td>
+					<td><span class="badge-tip">{ev.type}</span></td>
+					<td>
+						<div class="data-ora">
+							<span class="data-text">{new Date(ev.date).toLocaleDateString('ro-RO')}</span>
+							<span class="ora-text">{ev.start_time || '--:--'}</span>
+						</div>
+					</td>
+					<td><span class="durata-text">{ev.duration || '--'}</span></td>
+					<td>
+						<div class="capacitate-info">
+							<span class="max-part">{ev.max_participants || 0} pers.</span>
+							<span class="age-target">{ev.capacity || 'N/A'}</span>
+						</div>
+					</td>
+					<td><strong>{ev.price} {ev.currency || 'lei'}</strong></td>
 					<td><span class="badge-status status-{ev.status}">{ev.status}</span></td>
 					<td>
 						<div class="actiuni-celula">
@@ -64,6 +85,24 @@
 	.btn-succes:hover { background: #d3f9d8; border-color: #2b8a3e; }
 	.btn-galerie { color: #1971c2; border-color: #a5d8ff; }
 	.btn-galerie:hover { background: #e7f5ff; border-color: #1971c2; }
-	.eveniment-trecut { background-color: #fff9db !important; }
+	.eveniment-trecut { background-color: rgba(224, 49, 49, 0.05) !important; }
+	.eveniment-trecut td { color: var(--text-grey); }
+	
+	.info-ev { display: flex; flex-direction: column; gap: 0.2rem; }
+	.titlu-ev { font-size: 1.5rem; color: var(--text); }
+	.locatie-ev { font-size: 1.1rem; color: var(--text-grey); }
+	
+	.badge-tip { background: var(--primary-tint); color: var(--primary); padding: 0.2rem 0.8rem; border-radius: 4px; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; }
+	
+	.data-ora { display: flex; flex-direction: column; }
+	.data-text { font-weight: 600; }
+	.ora-text { font-size: 1.2rem; color: var(--primary); font-weight: 700; }
+	
+	.durata-text { font-style: italic; color: var(--text-grey); }
+	
+	.capacitate-info { display: flex; flex-direction: column; }
+	.max-part { font-weight: 600; color: var(--text); }
+	.age-target { font-size: 1.1rem; color: var(--accent-blue); font-weight: 700; }
+	
 	.td-gol { text-align: center; padding: 4rem; color: #999; }
 </style>

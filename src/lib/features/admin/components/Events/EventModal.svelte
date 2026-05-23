@@ -65,6 +65,10 @@
 					<input id="ev-durata" bind:value={eveniment.duration} />
 				</div>
 				<div class="camp">
+					<label for="ev-capacitate">Detalii Capacitate / Vârstă</label>
+					<input id="ev-capacitate" bind:value={eveniment.capacity} placeholder="ex: 14+ ani / 10-30 pers" />
+				</div>
+				<div class="camp">
 					<label for="ev-max">Max Participanți</label>
 					<input id="ev-max" type="number" min="1" bind:value={eveniment.max_participants} />
 				</div>

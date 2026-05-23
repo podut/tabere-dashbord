@@ -11,9 +11,10 @@
 	import CropModal from './CropModal.svelte';
 	import RepartizareModal from './RepartizareModal.svelte';
 
-	let { evenimente = $bindable([]), rezervari = $bindable([]), refreshEvents, refreshBookings }: {
+	let { evenimente = $bindable([]), rezervari = $bindable([]), servicii = [], refreshEvents, refreshBookings }: {
 		evenimente: EventRow[];
 		rezervari: Booking[];
+		servicii: Service[];
 		refreshEvents: () => Promise<void>;
 		refreshBookings: () => Promise<void>;
 	} = $props();
@@ -34,7 +35,7 @@
 	let evenimentCurent = $state<any>({
 		id: '', title: '', type: 'Milsim', description: '',
 		date: new Date().toISOString().slice(0, 10),
-		start_time: '10:00', duration: '6 ore',
+		start_time: '10:00', duration: '',
 		location: 'Baza HTCMX Airsoft', price: 50, currency: 'RON',
 		status: 'active', is_public: true, max_participants: 30,
 		positions: [], image_url: '', gallery: [], origin_booking_id: ''
@@ -55,7 +56,7 @@
 			: {
 				title: '', type: 'Milsim', description: '',
 				date: new Date().toISOString().slice(0, 10),
-				start_time: '10:00', duration: '6 ore',
+				start_time: '10:00', duration: '',
 				location: 'Baza HTCMX Airsoft', price: 50, currency: 'RON',
 				status: 'active', is_public: true, max_participants: 30,
 				positions: [], image_url: '', gallery: [], origin_booking_id: ''
@@ -78,6 +79,7 @@
 				date: dateStr,
 				start_time: evenimentCurent.start_time || '10:00',
 				duration: evenimentCurent.duration || '',
+				capacity: evenimentCurent.capacity || '',
 				location: evenimentCurent.location,
 				price: evenimentCurent.price,
 				currency: evenimentCurent.currency || 'RON',
@@ -223,14 +225,22 @@
 	}
 
 	function convertesteInEveniment(booking: Booking) {
+		const srv = servicii.find(s => s.title === booking.activity_title);
+		
 		evenimentCurent = {
 			title: `${booking.activity_title} - ${booking.nume_client}`,
-			description: `Creat din rezervarea nr. ${booking.id.slice(0, 8)}.`,
+			description: srv?.description || `Creat din rezervarea nr. ${booking.id.slice(0, 8)}.`,
 			date: booking.preferred_date || new Date().toISOString().slice(0, 10),
 			start_time: booking.preferred_time || '10:00',
+			duration: srv?.duration || '6 ore',
+			capacity: srv?.capacity || '',
 			location: 'Baza HTCMX Airsoft',
-			price: 0, currency: 'RON', status: 'active', is_public: true,
-			max_participants: 30, positions: [], image_url: '', gallery: [],
+			price: srv?.price || 0, 
+			currency: 'RON', status: 'active', is_public: true,
+			max_participants: Number(srv?.capacity?.split('-')?.[1]) || 30, 
+			positions: srv?.positions || [], 
+			image_url: srv?.image_url || '', 
+			gallery: srv?.gallery || [],
 			origin_booking_id: booking.id
 		};
 		editMode = false;
