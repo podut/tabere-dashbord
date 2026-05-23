@@ -3,6 +3,7 @@
 	import { NotificationRepository } from '$lib/data/repositories/NotificationRepository';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { NotificationRow, EventRow } from '$lib/types';
+	import NotificationMobileCard from './Notifications/view/NotificationMobileCard.svelte';
 
 	let { evenimente = [], supabase }: { evenimente: EventRow[], supabase: any } = $props();
 
@@ -164,7 +165,16 @@
 		</button>
 	</div>
 
-	<div class="tabel-container table-scroll notif-table-container">
+	<!-- Mobile View -->
+	<div class="mobile-only-grid">
+		{#each notificari as n}
+			<NotificationMobileCard {n} {deliveryState} onDelete={stergeNotificare} />
+		{:else}
+			<div class="td-gol">Nicio notificare găsită.</div>
+		{/each}
+	</div>
+
+	<div class="tabel-container table-scroll notif-table-container desktop-only-table">
 		<table>
 			<thead>
 				<tr>

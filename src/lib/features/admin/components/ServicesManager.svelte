@@ -4,6 +4,8 @@
 	import { getCroppedImg } from '$lib/utils/image';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { Service, Partner } from '$lib/types';
+	import ServiceMobileCard from './Services/view/ServiceMobileCard.svelte';
+	import PartnerMobileCard from './Services/view/PartnerMobileCard.svelte';
 
 	let { servicii = $bindable([]), parteneri = $bindable([]), refreshServices, refreshPartners }: {
         servicii: Service[],
@@ -174,7 +176,17 @@
 				Serviciu Nou
 			</button>
         </div>
-        <div class="table-scroll srv-table-container">
+
+		<!-- Mobile View -->
+		<div class="mobile-only-grid">
+			{#each servicii as s}
+				<ServiceMobileCard {s} onEdit={deschideServiciu} onDelete={(id) => stergeElement('services', id)} />
+			{:else}
+				<div class="td-gol">Niciun serviciu definit.</div>
+			{/each}
+		</div>
+
+        <div class="table-scroll srv-table-container desktop-only-table">
             <table>
                 <thead><tr><th>Img</th><th>Titlu</th><th>Preț</th><th>Categorie</th><th>Acțiuni</th></tr></thead>
                 <tbody>
@@ -205,10 +217,19 @@
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.5rem;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 				Partener Nou
 			</button>
-        </div>
-        <div class="table-scroll srv-table-container">
-            <table>
-                <thead><tr><th>Img</th><th>Nume</th><th>Website</th><th>Ordine</th><th>Acțiuni</th></tr></thead>
+			</div>
+
+			<!-- Mobile View -->
+			<div class="mobile-only-grid">
+			{#each servicii as s}
+			<ServiceMobileCard {s} onEdit={deschideServiciu} onDelete={(id) => stergeElement('services', id)} />
+			{:else}
+			<div class="td-gol">Niciun serviciu definit.</div>
+			{/each}
+			</div>
+
+			<div class="table-scroll srv-table-container desktop-only-table">
+			<table>                <thead><tr><th>Img</th><th>Nume</th><th>Website</th><th>Ordine</th><th>Acțiuni</th></tr></thead>
                 <tbody>
                     {#each parteneri as p}
                         <tr>
@@ -465,6 +486,17 @@
 	.srv-link { color: var(--accent-blue); text-decoration: none; font-size: 1.3rem; }
 	.srv-link:hover { text-decoration: underline; }
 	.actiuni-celula { display: flex; gap: 0.6rem; }
+
+	.td-gol { text-align: center; padding: 6rem; color: var(--text-grey); font-size: 1.5rem; font-style: italic; }
+
+	.mobile-only-grid { display: none; }
+
+	@media (max-width: 768px) {
+		.desktop-only-table { display: none; }
+		.mobile-only-grid { display: block; padding: 0.5rem; }
+		.tabs-intern-servicii { width: 100%; justify-content: space-between; }
+		.tab-item-srv { flex: 1; justify-content: center; padding: 1rem; }
+	}
 
 	/* Modal serviciu */
 	.modal-serviciu { max-width: 75rem !important; max-height: 90vh; overflow-y: auto; }

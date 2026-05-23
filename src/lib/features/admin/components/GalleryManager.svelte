@@ -59,7 +59,7 @@
         <button class="buton-primar" onclick={() => showGalModal = true}>+ Imagine Nouă</button>
     </div>
 
-    <div class="galerie-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: 2rem;">
+    <div class="galerie-grid">
         {#each galerie as g, i}
             <div 
                 class="foto-card" 
@@ -80,6 +80,24 @@
         {/each}
     </div>
 </div>
+
+<style>
+    .galerie-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+        gap: 2rem;
+    }
+
+    @media (max-width: 600px) {
+        .galerie-grid {
+            grid-template-columns: 1fr;
+            gap: 1.6rem;
+            padding: 0.5rem;
+        }
+        .actiuni-pagina { width: 100%; margin-bottom: 2.4rem !important; }
+        .actiuni-pagina button { width: 100%; padding: 1.4rem !important; }
+    }
+</style>
 
 {#if showGalModal}
 	<div class="modal-overlay"><div class="login-card" style="max-width: 40rem;">

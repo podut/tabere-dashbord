@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase';
 	import type { Profile } from '$lib/types';
+	import UserMobileCard from './view/UserMobileCard.svelte';
 
 	let { utilizatori = $bindable([]), utilTotal = $bindable(0) } = $props();
 
@@ -59,7 +60,7 @@
 		</div>
 	</div>
 
-	<div class="table-scroll users-table-container">
+	<div class="table-scroll users-table-container desktop-only-table">
 		{#if utilIncarcare}
 			<div class="incarcare-overlay">Se încarcă...</div>
 		{/if}
@@ -79,6 +80,20 @@
 				{/each}
 			</tbody>
 		</table>
+	</div>
+
+	<!-- Mobile View -->
+	<div class="mobile-only-grid">
+		{#if utilIncarcare}
+			<div class="incarcare-overlay" style="position: static; padding: 2rem;">Se încarcă...</div>
+		{/if}
+		{#each utilizatori as u, i}
+			<UserMobileCard {u} index={(utilPagina - 1) * utilPerPagina + i + 1} />
+		{:else}
+			{#if !utilIncarcare}
+				<div class="td-gol">Niciun utilizator găsit.</div>
+			{/if}
+		{/each}
 	</div>
 
 	<!-- Pagination -->
