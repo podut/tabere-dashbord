@@ -64,6 +64,7 @@
 		{@const evGrup = evenimente.find(e => e.id === eid)}
 		{@const participantiEv = confirmati.filter(r => r.event_id === eid)}
 		{@const pozitii = (evGrup?.positions as string[] | undefined) ?? []}
+		{@const neasignati = participantiEv.filter(p => !p.selected_position || !pozitii.includes(p.selected_position))}
 
 		<div class="grup-eveniment">
 			<div class="grup-header">
@@ -125,7 +126,6 @@
 						</div>
 					{/each}
 
-					{@const neasignati = participantiEv.filter(p => !p.selected_position || !pozitii.includes(p.selected_position))}
 					{#if neasignati.length > 0}
 						<div class="pozitie-col pozitie-col--unassigned">
 							<div class="pozitie-col-header">
