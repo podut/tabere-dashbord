@@ -127,6 +127,79 @@
         grid-template-columns: 1fr !important;
         gap: 1.2rem !important;
     }
+
+    /* Mobile Drawer */
+    .mobile-drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(8px);
+        z-index: 2000;
+        display: flex;
+        justify-content: flex-end;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .mobile-drawer {
+        background: var(--bg-card);
+        width: 85%;
+        height: 100%;
+        box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+        display: flex;
+        flex-direction: column;
+        padding: 2.4rem;
+        animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3.2rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.6rem;
+    }
+
+    .drawer-header h2 {
+        color: var(--primary);
+        font-size: 2rem;
+        margin: 0;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+    .drawer-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .drawer-nav button {
+        display: flex;
+        align-items: center;
+        gap: 1.6rem;
+        padding: 1.6rem;
+        border-radius: 12px;
+        background: var(--bg-dark);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 1.6rem;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .drawer-nav button.activ {
+        background: var(--primary);
+        color: var(--bg-dark);
+        border-color: var(--primary);
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
 }
 
 /* 2. Z Fold 4 Folded (Cover Screen) Specifics */

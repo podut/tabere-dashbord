@@ -46,6 +46,7 @@
 
 	let incarcare = $state(false);
 	let sectiuneActiva = $state('evenimente');
+	let mobileMenuOpen = $state(false);
 
 	async function handleLogin(e: SubmitEvent) {
 		e.preventDefault();
@@ -249,6 +250,29 @@
 			</main>
 		</div>
 
+		<!-- Mobile Drawer Menu -->
+		{#if mobileMenuOpen}
+			<div class="mobile-drawer-overlay" onclick={() => mobileMenuOpen = false} role="presentation">
+				<div class="mobile-drawer" onclick={(e) => e.stopPropagation()} role="dialog">
+					<div class="drawer-header">
+						<h2>Meniu Administrare</h2>
+						<button class="btn-icon" onclick={() => mobileMenuOpen = false}>×</button>
+					</div>
+					<nav class="drawer-nav">
+						<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => { sectiuneActiva = 'evenimente'; mobileMenuOpen = false; }}>📅 Evenimente</button>
+						<button class:activ={sectiuneActiva === 'echipament'} onclick={() => { sectiuneActiva = 'echipament'; mobileMenuOpen = false; }}>🔫 Echipament</button>
+						<button class:activ={sectiuneActiva === 'produse'} onclick={() => { sectiuneActiva = 'produse'; mobileMenuOpen = false; }}>🛒 Produse</button>
+						<button class:activ={sectiuneActiva === 'comenzi'} onclick={() => { sectiuneActiva = 'comenzi'; mobileMenuOpen = false; }}>📦 Comenzi</button>
+						<button class:activ={sectiuneActiva === 'utilizatori'} onclick={() => { sectiuneActiva = 'utilizatori'; mobileMenuOpen = false; }}>👥 Utilizatori</button>
+						<button class:activ={sectiuneActiva === 'servicii'} onclick={() => { sectiuneActiva = 'servicii'; mobileMenuOpen = false; }}>🛠️ Servicii</button>
+						<button class:activ={sectiuneActiva === 'galerie'} onclick={() => { sectiuneActiva = 'galerie'; mobileMenuOpen = false; }}>🖼️ Galerie</button>
+						<button class:activ={sectiuneActiva === 'notificari'} onclick={() => { sectiuneActiva = 'notificari'; mobileMenuOpen = false; }}>📢 Notificări</button>
+						<button class:activ={sectiuneActiva === 'site'} onclick={() => { sectiuneActiva = 'site'; mobileMenuOpen = false; }}>🌐 Conținut Site</button>
+					</nav>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Mobile Bottom Nav -->
 		<nav class="mobile-nav" style="display:none;">
 			<button class:activ={sectiuneActiva === 'dashboard'} onclick={() => sectiuneActiva = 'dashboard'}>
@@ -260,11 +284,8 @@
 			<button class:activ={sectiuneActiva === 'comenzi'} onclick={() => sectiuneActiva = 'comenzi'}>
 				<span>📦</span><small>Comenzi</small>
 			</button>
-			<button class:activ={sectiuneActiva === 'notificari'} onclick={() => sectiuneActiva = 'notificari'}>
-				<span>📢</span><small>Notif.</small>
-			</button>
-			<button class:activ={sectiuneActiva === 'site'} onclick={() => sectiuneActiva = 'site'}>
-				<span>🌐</span><small>Site</small>
+			<button onclick={() => mobileMenuOpen = true}>
+				<span>🍔</span><small>Meniu</small>
 			</button>
 			<button onclick={handleLogout}>
 				<span>🚪</span><small>Ieșire</small>
