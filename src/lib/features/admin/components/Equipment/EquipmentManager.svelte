@@ -4,6 +4,7 @@
 	import { getCroppedImg } from '$lib/utils/image';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { Equipment } from '$lib/types';
+	import EquipmentMobileCard from './view/EquipmentMobileCard.svelte';
 
 	let { echipament = $bindable([]), refreshEquipment }: { 
 		echipament: Equipment[],
@@ -28,7 +29,7 @@
 		parent_id: null
 	});
 
-	let parents = $derived(echipament.filter((e) => !e.parent_id));
+	let parents = $derived(echipament ? echipament.filter((e) => !e.parent_id) : []);
 
 	function deschideEq(item: any = null, parentId: string | null = null) {
 		editMode = !!item;
@@ -53,7 +54,7 @@
             image_url: eqCurent.image_url,
             category: eqCurent.category,
             order: eqCurent.order,
-            parent_id: eqCurent.parent_id === 'null' || eqCurent.parent_id === '' ? null : eqCurent.parent_id
+            parent_id: (eqCurent.parent_id === 'null' || eqCurent.parent_id === '' || !eqCurent.parent_id) ? null : eqCurent.parent_id
         };
 
 		const { error } = editMode
@@ -68,17 +69,19 @@
 	}
 
 	async function stergeEq(id: string) {
-		if (await confirmDialog({
-			title: 'Stergi elementul?',
-			message: 'Actiunea este ireversibila.',
-			confirmLabel: 'Sterge',
+		if (!(await confirmDialog({
+			title: 'Ștergi elementul?',
+			message: 'Acțiunea este ireversibilă.',
+			confirmLabel: 'Șterge',
 			danger: true
-		})) {
-			const { error } = await supabase.from('equipment').delete().eq('id', id);
-			if (!error) {
-				await refreshEquipment();
-				showToast('success', 'Sters.');
-			}
+		}))) return;
+
+		const { error } = await supabase.from('equipment').delete().eq('id', id);
+		if (!error) {
+			await refreshEquipment();
+			showToast('success', 'Șters.');
+		} else {
+			showToast('error', error.message);
 		}
 	}
 
@@ -96,7 +99,7 @@
 		incarcareFoto = true;
 		try {
 			const croppedBlob = await getCroppedImg(cropImage, croppedAreaPixels);
-			if (!croppedBlob) throw new Error('Eroare la procesare.');
+			if (!croppedBlob) throw new Error('Eroare la procesare imagine.');
 			const fileName = `equipment/${Date.now()}.jpg`;
 			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, croppedBlob);
 			if (uploadError) throw uploadError;
@@ -142,23 +145,23 @@
 				</div>
 				<div class="eq-sub-items">
 					{#each echipament.filter((e) => e.parent_id === parent.id) as sub}
-						<!-- Desktop Card -->
+						<!-- Desktop View -->
 						<div class="eq-sub-card desktop-only">
 							{#if sub.image_url}<img src={sub.image_url} alt="" class="eq-sub-img" />{/if}
 							<div class="eq-sub-info">
 								<h4>{sub.title}</h4>
 								<div class="eq-sub-actions">
-									<button class="btn-icon btn-xs" onclick={() => deschideEq(sub)}>
+									<button class="btn-icon btn-xs" onclick={() => deschideEq(sub)} title="Editează">
 										<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 									</button>
-									<button class="btn-icon btn-sterge btn-xs" onclick={() => stergeEq(sub.id)}>
+									<button class="btn-icon btn-sterge btn-xs" onclick={() => stergeEq(sub.id)} title="Șterge">
 										<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
 									</button>
 								</div>
 							</div>
 						</div>
 
-						<!-- Mobile Card -->
+						<!-- Mobile View -->
 						<div class="mobile-only">
 							<EquipmentMobileCard {sub} onEdit={deschideEq} onDelete={stergeEq} />
 						</div>
@@ -166,6 +169,11 @@
 						<p class="empty-state">Niciun produs adăugat în această secțiune.</p>
 					{/each}
 				</div>
+			</div>
+		{:else}
+			<div class="empty-state-global">
+				<p>Nu există nicio secțiune de echipament definită.</p>
+				<button class="buton-primar" onclick={() => deschideEq()}>Adaugă prima secțiune</button>
 			</div>
 		{/each}
 	</div>
@@ -176,24 +184,24 @@
 		<div class="login-card" style="max-width: 60rem;">
 			<h2>{editMode ? 'Editează' : 'Adaugă'} {eqCurent.parent_id ? 'Produs' : 'Secțiune'}</h2>
 			<form onsubmit={salveazaEq}>
-				<div class="camp"><label>Denumire</label><input bind:value={eqCurent.title} required /></div>
-				<div class="camp"><label>Descriere</label><textarea bind:value={eqCurent.description} style="width:100%; height:8rem; border-radius:9px; border:1px solid var(--border); padding:1rem;"></textarea></div>
+				<div class="camp"><label for="eq-title">Denumire</label><input id="eq-title" bind:value={eqCurent.title} required /></div>
+				<div class="camp"><label for="eq-desc">Descriere</label><textarea id="eq-desc" bind:value={eqCurent.description} style="width:100%; height:8rem; border-radius:9px; border:1px solid var(--border); padding:1rem;"></textarea></div>
 
 				<div class="form-row-2col">
 					<div class="camp">
-						<label>Categorie</label>
-						<select bind:value={eqCurent.category} style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border);">
+						<label for="eq-cat">Categorie</label>
+						<select id="eq-cat" bind:value={eqCurent.category} style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border);">
 							<option value="Armament">Armament</option><option value="Protectie">Protecție</option><option value="Accesorii">Accesorii</option><option value="Sub-item">Produs</option>
 						</select>
 					</div>
-					<div class="camp"><label>Ordine</label><input type="number" bind:value={eqCurent.order} /></div>
+					<div class="camp"><label for="eq-order">Ordine</label><input id="eq-order" type="number" bind:value={eqCurent.order} /></div>
 				</div>
 
 				<div class="camp">
 					<label>Imagine</label>
 					<div class="upload-zone-wrapper">
-						<input type="file" accept="image/*" onchange={onFileSelected} id="eq-file" style="display:none" />
-						<label for="eq-file" class="buton-iesire" style="display:inline-block; width:100%; text-align:center; padding: 2rem; border-style: dashed; cursor: pointer;">
+						<input type="file" accept="image/*" onchange={onFileSelected} id="eq-file-input" style="display:none" />
+						<label for="eq-file-input" class="buton-iesire" style="display:inline-block; width:100%; text-align:center; padding: 2rem; border-style: dashed; cursor: pointer;">
 							{eqCurent.image_url ? 'Schimbă Imaginea' : 'Apasă pentru a încărca imagine'}
 						</label>
 					</div>
@@ -346,6 +354,15 @@
 		padding: 2rem;
 		font-size: 1.3rem;
 	}
+
+	.empty-state-global {
+		text-align: center;
+		padding: 8rem 2rem;
+		background: var(--bg-card);
+		border-radius: 20px;
+		border: 1px dashed var(--border-strong);
+	}
+	.empty-state-global p { font-size: 1.6rem; color: var(--text-grey); margin-bottom: 2rem; }
 
 	.upload-zone-wrapper {
 		margin-bottom: 1.6rem;
