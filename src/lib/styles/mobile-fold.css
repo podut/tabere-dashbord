@@ -27,11 +27,12 @@
         left: 0;
         right: 0;
         background: var(--bg-card);
-        border-top: 1px solid var(--border);
-        padding: 0.8rem;
+        border-top: 1px solid var(--border-strong);
+        padding: 1.2rem 0.4rem;
+        padding-bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
         z-index: 1000;
         justify-content: space-around;
-        box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
     }
 
     .mobile-nav button {
@@ -41,15 +42,32 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.4rem;
-        font-size: 1rem;
-        font-weight: 700;
+        gap: 0.6rem;
+        font-size: 1.1rem;
+        font-weight: 800;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
         flex: 1;
+        transition: all 0.2s;
+    }
+
+    .mobile-nav button span {
+        font-size: 2.4rem;
+        line-height: 1;
+    }
+
+    .mobile-nav button small {
+        font-size: 0.95rem;
+        opacity: 0.8;
     }
 
     .mobile-nav button.activ {
         color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .mobile-nav button.activ span {
+        filter: drop-shadow(0 0 8px rgba(197, 160, 48, 0.4));
     }
 
     /* Stats Grid Collapse */
