@@ -45,7 +45,7 @@
 	let venituri = $state(0);
 
 	let incarcare = $state(false);
-	let sectiuneActiva = $state('dashboard');
+	let sectiuneActiva = $state('evenimente');
 
 	async function handleLogin(e: SubmitEvent) {
 		e.preventDefault();
@@ -189,10 +189,18 @@
 			</div>
 		</header>
 
+		<div class="desktop-only-stats">
+			<StatsGrid 
+				{venituri} 
+				comenziNoi={comenzi.filter(c => c.status === 'nou').length} 
+				{utilTotal} 
+				evenimenteDeFinalizat={evenimente.filter(e => e.status === 'active' && new Date(e.date) < new Date()).length} 
+			/>
+		</div>
+
 		<div class="layout-continut">
 			<aside class="sidebar">
 				<nav>
-					<button class:activ={sectiuneActiva === 'dashboard'} onclick={() => sectiuneActiva = 'dashboard'}>📊 Performanță</button>
 					<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => sectiuneActiva = 'evenimente'}>📅 Evenimente</button>
 					<button class:activ={sectiuneActiva === 'echipament'} onclick={() => sectiuneActiva = 'echipament'}>🔫 Echipament</button>
 					<button class:activ={sectiuneActiva === 'produse'} onclick={() => sectiuneActiva = 'produse'}>🛒 Produse</button>
@@ -210,12 +218,14 @@
 					<div class="incarcare">Se încarcă datele...</div>
 				{:else}
 					{#if sectiuneActiva === 'dashboard'}
-						<StatsGrid 
-							{venituri} 
-							comenziNoi={comenzi.filter(c => c.status === 'nou').length} 
-							{utilTotal} 
-							evenimenteDeFinalizat={evenimente.filter(e => e.status === 'active' && new Date(e.date) < new Date()).length} 
-						/>
+						<div class="mobile-only-stats">
+							<StatsGrid 
+								{venituri} 
+								comenziNoi={comenzi.filter(c => c.status === 'nou').length} 
+								{utilTotal} 
+								evenimenteDeFinalizat={evenimente.filter(e => e.status === 'active' && new Date(e.date) < new Date()).length} 
+							/>
+						</div>
 					{:else if sectiuneActiva === 'evenimente'}
 						<EventsManager bind:evenimente bind:rezervari {servicii} {refreshEvents} {refreshBookings} />
 					{:else if sectiuneActiva === 'echipament'}
@@ -280,4 +290,12 @@
 	.sidebar button.activ { background: var(--primary); color: var(--bg-dark); font-weight: 700; box-shadow: 0 4px 15px rgba(197, 160, 48, 0.25); }
 	.zona-lucru { flex: 1; min-width: 0; }
 	.incarcare { display: flex; align-items: center; justify-content: center; height: 40rem; font-size: 1.6rem; color: var(--text-grey); }
+
+	.desktop-only-stats { display: block; padding: 0 3.2rem; max-width: 130rem; margin: 2rem auto 0; width: 100%; }
+	.mobile-only-stats { display: none; }
+
+	@media (max-width: 600px) {
+		.desktop-only-stats { display: none !important; }
+		.mobile-only-stats { display: block; }
+	}
 </style>
