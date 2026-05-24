@@ -45,7 +45,7 @@
 	let venituri = $state(0);
 
 	let incarcare = $state(false);
-	let sectiuneActiva = $state('evenimente');
+	let sectiuneActiva = $state('dashboard');
 
 	async function handleLogin(e: SubmitEvent) {
 		e.preventDefault();
@@ -189,16 +189,10 @@
 			</div>
 		</header>
 
-		<StatsGrid 
-			{venituri} 
-			comenziNoi={comenzi.filter(c => c.status === 'nou').length} 
-			{utilTotal} 
-			evenimenteDeFinalizat={evenimente.filter(e => e.status === 'active' && new Date(e.date) < new Date()).length} 
-		/>
-
 		<div class="layout-continut">
 			<aside class="sidebar">
 				<nav>
+					<button class:activ={sectiuneActiva === 'dashboard'} onclick={() => sectiuneActiva = 'dashboard'}>📊 Performanță</button>
 					<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => sectiuneActiva = 'evenimente'}>📅 Evenimente</button>
 					<button class:activ={sectiuneActiva === 'echipament'} onclick={() => sectiuneActiva = 'echipament'}>🔫 Echipament</button>
 					<button class:activ={sectiuneActiva === 'produse'} onclick={() => sectiuneActiva = 'produse'}>🛒 Produse</button>
@@ -215,7 +209,14 @@
 				{#if incarcare && evenimente.length === 0}
 					<div class="incarcare">Se încarcă datele...</div>
 				{:else}
-					{#if sectiuneActiva === 'evenimente'}
+					{#if sectiuneActiva === 'dashboard'}
+						<StatsGrid 
+							{venituri} 
+							comenziNoi={comenzi.filter(c => c.status === 'nou').length} 
+							{utilTotal} 
+							evenimenteDeFinalizat={evenimente.filter(e => e.status === 'active' && new Date(e.date) < new Date()).length} 
+						/>
+					{:else if sectiuneActiva === 'evenimente'}
 						<EventsManager bind:evenimente bind:rezervari {servicii} {refreshEvents} {refreshBookings} />
 					{:else if sectiuneActiva === 'echipament'}
 						<EquipmentManager bind:echipament {refreshEquipment} />
@@ -240,6 +241,9 @@
 
 		<!-- Mobile Bottom Nav -->
 		<nav class="mobile-nav" style="display:none;">
+			<button class:activ={sectiuneActiva === 'dashboard'} onclick={() => sectiuneActiva = 'dashboard'}>
+				<span>📊</span><small>Stats</small>
+			</button>
 			<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => sectiuneActiva = 'evenimente'}>
 				<span>📅</span><small>Evenim.</small>
 			</button>
