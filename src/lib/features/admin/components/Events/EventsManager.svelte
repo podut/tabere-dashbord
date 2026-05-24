@@ -1,7 +1,9 @@
 <script lang="ts">
-	import { supabase, STORAGE_BUCKET } from '$lib/supabase';
+	import { STORAGE_BUCKET, supabase } from '$lib/supabase';
+	import { EventRepository } from '$lib/data/repositories/EventRepository';
+	import { BookingRepository } from '$lib/data/repositories/BookingRepository';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
-	import type { EventRow, Booking } from '$lib/types';
+	import type { EventRow, Booking, Service } from '$lib/types';
 
 	import EventsTab from './EventsTab.svelte';
 	import CereriTab from './CereriTab.svelte';
@@ -73,6 +75,7 @@
 				: new Date().toISOString();
 
 			const payload = {
+				id: editMode ? evenimentCurent.id : undefined,
 				title: evenimentCurent.title,
 				type: evenimentCurent.type || '',
 				description: evenimentCurent.description,
@@ -93,14 +96,10 @@
 				origin_booking_id: evenimentCurent.origin_booking_id || ''
 			};
 
-			const { error } = editMode
-				? await supabase.from('events').update(payload).eq('id', evenimentCurent.id)
-				: await supabase.from('events').insert([payload]);
-
-			if (error) throw error;
+			await EventRepository.saveEvent(payload as any);
 
 			if (!editMode && evenimentCurent.origin_booking_id) {
-				await supabase.from('bookings').update({ status: 'confirmat' }).eq('id', evenimentCurent.origin_booking_id);
+				await BookingRepository.updateBooking(evenimentCurent.origin_booking_id, { status: 'confirmat' });
 			}
 			showEvModal = false;
 			await refreshEvents();
@@ -121,8 +120,13 @@
 			danger: false
 		}))) return;
 
-		const { error } = await supabase.from('events').update({ status: 'finished', active: false }).eq('id', id);
-		if (!error) { await refreshEvents(); showToast('success', 'Eveniment finalizat.'); }
+		try {
+			await EventRepository.finalizeEvent(id);
+			await refreshEvents(); 
+			showToast('success', 'Eveniment finalizat.');
+		} catch (err: any) {
+			showToast('error', err.message);
+		}
 	}
 
 	async function stergeEveniment(ev: EventRow) {
@@ -133,8 +137,13 @@
 			danger: true
 		}))) return;
 
-		const { error } = await supabase.from('events').delete().eq('id', ev.id);
-		if (!error) { await refreshEvents(); showToast('success', 'Eveniment șters.'); }
+		try {
+			await EventRepository.deleteEvent(ev.id);
+			await refreshEvents(); 
+			showToast('success', 'Eveniment șters.');
+		} catch (err: any) {
+			showToast('error', err.message);
+		}
 	}
 
 	async function stergeBooking(id: string) {
@@ -145,18 +154,23 @@
 			danger: true
 		}))) return;
 
-		const { error } = await supabase.from('bookings').delete().eq('id', id);
-		if (!error) { await refreshBookings(); showToast('success', 'Șters.'); }
+		try {
+			await BookingRepository.deleteBooking(id);
+			await refreshBookings(); 
+			showToast('success', 'Șters.');
+		} catch (err: any) {
+			showToast('error', err.message);
+		}
 	}
 
 	async function mutaParticipant(bookingId: string, newPosition: string) {
-		const { error } = await supabase
-			.from('bookings')
-			.update({ selected_position: newPosition })
-			.eq('id', bookingId);
-		if (error) { showToast('error', error.message); return; }
-		await refreshBookings();
-		showToast('success', `Mutat pe poziția "${newPosition}".`);
+		try {
+			await BookingRepository.updateBooking(bookingId, { selected_position: newPosition });
+			await refreshBookings();
+			showToast('success', `Mutat pe poziția "${newPosition}".`);
+		} catch (err: any) {
+			showToast('error', err.message);
+		}
 	}
 
 	async function elibereazaPozitia(bookingId: string) {
@@ -167,13 +181,13 @@
 			danger: false
 		}))) return;
 
-		const { error } = await supabase
-			.from('bookings')
-			.update({ selected_position: '', status: 'nou' })
-			.eq('id', bookingId);
-		if (error) { showToast('error', error.message); return; }
-		await refreshBookings();
-		showToast('success', 'Participant scos din poziție.');
+		try {
+			await BookingRepository.releasePosition(bookingId);
+			await refreshBookings();
+			showToast('success', 'Participant scos din poziție.');
+		} catch (err: any) {
+			showToast('error', err.message);
+		}
 	}
 
 	function deschideRepartizare(booking: Booking) {
@@ -195,11 +209,7 @@
 		if (!bookingDeRepartizat || !pozitiaSelectata) return;
 		savingRepartizare = true;
 		try {
-			const { error } = await supabase
-				.from('bookings')
-				.update({ selected_position: pozitiaSelectata, status: 'confirmat' })
-				.eq('id', bookingDeRepartizat.id);
-			if (error) throw error;
+			await BookingRepository.assignPosition(bookingDeRepartizat.id, pozitiaSelectata);
 
 			if (bookingDeRepartizat.user_id) {
 				const evTitle = evenimente.find(e => e.id === bookingDeRepartizat!.event_id)?.title ?? 'eveniment';
@@ -272,7 +282,7 @@
 				evenimentCurent.image_url = publicUrl;
 			} else if (cropContext === 'event_gallery') {
 				const newGallery = [...(evenimentCurent.gallery || []), publicUrl];
-				await supabase.from('events').update({ gallery: newGallery }).eq('id', evenimentCurent.id);
+				await EventRepository.saveEvent({ id: evenimentCurent.id, gallery: newGallery });
 				evenimentCurent.gallery = newGallery;
 			}
 
@@ -286,10 +296,14 @@
 	}
 
 	async function stergeFotoEveniment(url: string) {
-		const newGallery = evenimentCurent.gallery.filter((item: string) => item !== url);
-		await supabase.from('events').update({ gallery: newGallery }).eq('id', evenimentCurent.id);
-		evenimentCurent.gallery = newGallery;
-		await refreshEvents();
+		try {
+			const newGallery = evenimentCurent.gallery.filter((item: string) => item !== url);
+			await EventRepository.saveEvent({ id: evenimentCurent.id, gallery: newGallery });
+			evenimentCurent.gallery = newGallery;
+			await refreshEvents();
+		} catch (err: any) {
+			showToast('error', err.message);
+		}
 	}
 
 	const tabs: { id: Tab; label: string; count?: () => number }[] = [

@@ -1,13 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabase';
+	import { adminState } from '$lib/admin/admin.svelte';
 	import ToastHost from '$lib/components/ToastHost.svelte';
 	import ConfirmHost from '$lib/components/ConfirmHost.svelte';
-	import { showToast } from '$lib/admin/notify.svelte';
-	import type {
-		EventRow, Booking, Product, OrderRow, Service, Equipment,
-		Partner, Gallery, WebsiteContent, Profile
-	} from '$lib/types';
 	import '../lib/styles/admin.css';
 	import '../lib/styles/mobile-fold.css';
 
@@ -24,158 +20,50 @@
 	import ServicesManager from '$lib/features/admin/components/ServicesManager.svelte';
 	import GalleryManager from '$lib/features/admin/components/GalleryManager.svelte';
 
-	let authenticated = $state(false);
 	let email = $state('');
 	let password = $state('');
 	let eroareLogin = $state('');
-	let user = $state<any>(null);
-
-	let evenimente = $state<EventRow[]>([]);
-	let produse = $state<Product[]>([]);
-	let rezervari = $state<Booking[]>([]);
-	let utilizatori = $state<Profile[]>([]);
-	let utilTotal = $state(0);
 	let notificationsPanelRef = $state<any>(null);
-	let servicii = $state<Service[]>([]);
-	let galerie = $state<Gallery[]>([]);
-	let parteneri = $state<Partner[]>([]);
-	let continutSite = $state<WebsiteContent[]>([]);
-	let comenzi = $state<OrderRow[]>([]);
-	let echipament = $state<Equipment[]>([]);
-	let venituri = $state(0);
-
-	let incarcare = $state(false);
-	let sectiuneActiva = $state('evenimente');
 	let mobileMenuOpen = $state(false);
 
 	async function handleLogin(e: SubmitEvent) {
 		e.preventDefault();
 		eroareLogin = '';
-		incarcare = true;
+		adminState.incarcare = true;
 		try {
-			const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+			const { error } = await supabase.auth.signInWithPassword({ email, password });
 			if (error) eroareLogin = error.message;
-			else {
-				user = data.user;
-				authenticated = true;
-				await incarcaDate();
-			}
+			// Statul se va actualiza via onAuthStateChange în adminState.init()
 		} catch (err) {
 			eroareLogin = 'Eroare la autentificare.';
 		} finally {
-			incarcare = false;
+			adminState.incarcare = false;
 		}
 	}
 
 	async function handleLogout() {
 		await supabase.auth.signOut();
-		authenticated = false;
-		user = null;
 	}
 
-	async function incarcaDate() {
-		incarcare = true;
-		try {
-			const [ev, prod, rez, serv, gal, cmd, eq, pt, site] = await Promise.all([
-				supabase.from('events').select('*').order('date', { ascending: false }),
-				supabase.from('products').select('*').order('created_at', { ascending: false }),
-				supabase.from('bookings').select('*').order('created_at', { ascending: false }),
-				supabase.from('services').select('*').order('order', { ascending: true }),
-				supabase.from('gallery').select('*').order('order', { ascending: true }),
-				supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
-				supabase.from('equipment').select('*').order('order', { ascending: true }),
-				supabase.from('partners').select('*').order('order', { ascending: true }),
-				supabase.from('website_content').select('*')
-			]);
-
-			evenimente = ev.data || [];
-			
-			// Auto-finalize passed events
-			const acum = new Date();
-			const evDeFinalizat = evenimente.filter(e => e.status === 'active' && new Date(e.date) < acum);
-			if (evDeFinalizat.length > 0) {
-				await Promise.all(evDeFinalizat.map(e => 
-					supabase.from('events').update({ status: 'finished', active: false }).eq('id', e.id)
-				));
-				// Reload events after update
-				const { data } = await supabase.from('events').select('*').order('date', { ascending: false });
-				evenimente = data || [];
-			}
-
-			produse = prod.data || [];
-			rezervari = rez.data || [];
-			servicii = serv.data || [];
-			galerie = gal.data || [];
-			comenzi = cmd.data || [];
-			echipament = eq.data || [];
-			parteneri = pt.data || [];
-			continutSite = (site.data as WebsiteContent[]) || [];
-			
-			const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-			utilTotal = count || 0;
-
-			venituri = comenzi.filter(c => c.status === 'finalizat').reduce((acc, curr) => acc + Number(curr.total_price), 0);
-		} catch (err) {
-			console.error('Error loading data:', err);
-		} finally {
-			incarcare = false;
-		}
-	}
-
-	// Granular refreshers passed to components
-	const refreshEvents = async () => { 
-		const { data } = await supabase.from('events').select('*').order('date', { ascending: false }); 
-		let evs = data || [];
-		const acum = new Date();
-		const evDeFinalizat = evs.filter(e => e.status === 'active' && new Date(e.date) < acum);
-		if (evDeFinalizat.length > 0) {
-			await Promise.all(evDeFinalizat.map(e => 
-				supabase.from('events').update({ status: 'finished', active: false }).eq('id', e.id)
-			));
-			const { data: data2 } = await supabase.from('events').select('*').order('date', { ascending: false });
-			evs = data2 || [];
-		}
-		evenimente = evs; 
-	};
-	const refreshProducts = async () => { const { data } = await supabase.from('products').select('*').order('created_at', { ascending: false }); produse = data || []; };
-	const refreshBookings = async () => { const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false }); rezervari = data || []; };
-	const refreshOrders = async () => { const { data } = await supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }); comenzi = data || []; };
-	const refreshEquipment = async () => { const { data } = await supabase.from('equipment').select('*').order('order', { ascending: true }); echipament = data || []; };
-	const refreshServices = async () => { const { data } = await supabase.from('services').select('*').order('order', { ascending: true }); servicii = data || []; };
-	const refreshPartners = async () => { const { data } = await supabase.from('partners').select('*').order('order', { ascending: true }); parteneri = data || []; };
-	const refreshGallery = async () => { const { data } = await supabase.from('gallery').select('*').order('order', { ascending: true }); galerie = data || []; };
-	const refreshSite = async () => { const { data } = await supabase.from('website_content').select('*'); continutSite = (data as WebsiteContent[]) || []; };
-
-	onMount(async () => {
-		const { data: { session } } = await supabase.auth.getSession();
-		if (session) { user = session.user; authenticated = true; await incarcaDate(); }
-		supabase.auth.onAuthStateChange((_event, session) => {
-			if (session) { user = session.user; authenticated = true; }
-			else { user = null; authenticated = false; }
-		});
+	onMount(() => {
+		adminState.init();
 	});
 </script>
 
 <svelte:head>
 	<title>HTCMX Airsoft — Admin Panel</title>
-	<meta name="description" content="Panou de administrare HTCMX Airsoft. Gestionează evenimentele, misiunile și magazinul platformei." />
-	
-	<!-- Open Graph / Facebook -->
-	<meta property="og:type" content="website" />
-	<meta property="og:title" content="HTCMX Airsoft Admin" />
-	<meta property="og:description" content="Gestionare tactică a evenimentelor și resurselor HTCMX Airsoft." />
-	<meta property="og:image" content="/img/htcmx-logo.jpg" />
-
-	<!-- Twitter -->
-	<meta property="twitter:card" content="summary_large_image" />
-	<meta property="twitter:title" content="HTCMX Airsoft Admin" />
-	<meta property="twitter:description" content="Gestionare tactică a evenimentelor și resurselor HTCMX Airsoft." />
-	<meta property="twitter:image" content="/img/htcmx-logo.jpg" />
 </svelte:head>
 
 <div class="admin-wrapper">
-	{#if !authenticated}
-		<LoginScreen bind:authenticated {handleLogin} bind:email bind:password bind:eroareLogin bind:incarcare />
+	{#if !adminState.authenticated}
+		<LoginScreen 
+			bind:authenticated={adminState.authenticated} 
+			{handleLogin} 
+			bind:email 
+			bind:password 
+			bind:eroareLogin 
+			bind:incarcare={adminState.incarcare} 
+		/>
 	{:else}
 		<header class="admin-header">
 			<div class="header-continut">
@@ -184,7 +72,7 @@
 					<span class="badge-admin">ADMIN</span>
 				</div>
 				<div class="user-side">
-					<span class="user-email">{user?.email}</span>
+					<span class="user-email">{adminState.user?.email}</span>
 					<button onclick={handleLogout} class="buton-iesire">Ieșire</button>
 				</div>
 			</div>
@@ -192,59 +80,65 @@
 
 		<div class="desktop-only-stats">
 			<StatsGrid 
-				{venituri} 
-				comenziNoi={comenzi.filter(c => c.status === 'nou').length} 
-				{utilTotal} 
-				evenimenteDeFinalizat={evenimente.filter(e => e.status === 'active' && new Date(e.date) < new Date()).length} 
+				venituri={adminState.venituri} 
+				comenziNoi={adminState.comenziNoi} 
+				utilTotal={adminState.utilTotal} 
+				evenimenteDeFinalizat={adminState.evenimenteDeFinalizat} 
 			/>
 		</div>
 
 		<div class="layout-continut">
 			<aside class="sidebar">
 				<nav>
-					<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => sectiuneActiva = 'evenimente'}>📅 Evenimente</button>
-					<button class:activ={sectiuneActiva === 'echipament'} onclick={() => sectiuneActiva = 'echipament'}>🔫 Echipament</button>
-					<button class:activ={sectiuneActiva === 'produse'} onclick={() => sectiuneActiva = 'produse'}>🛒 Produse</button>
-					<button class:activ={sectiuneActiva === 'comenzi'} onclick={() => sectiuneActiva = 'comenzi'}>📦 Comenzi</button>
-					<button class:activ={sectiuneActiva === 'utilizatori'} onclick={() => sectiuneActiva = 'utilizatori'}>👥 Utilizatori</button>
-					<button class:activ={sectiuneActiva === 'servicii'} onclick={() => sectiuneActiva = 'servicii'}>🛠️ Servicii</button>
-					<button class:activ={sectiuneActiva === 'galerie'} onclick={() => sectiuneActiva = 'galerie'}>🖼️ Galerie</button>
-					<button class:activ={sectiuneActiva === 'notificari'} onclick={() => sectiuneActiva = 'notificari'}>📢 Notificări</button>
-					<button class:activ={sectiuneActiva === 'site'} onclick={() => sectiuneActiva = 'site'}>🌐 Conținut Site</button>
+					<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => adminState.sectiuneActiva = 'evenimente'}>📅 Evenimente</button>
+					<button class:activ={adminState.sectiuneActiva === 'echipament'} onclick={() => adminState.sectiuneActiva = 'echipament'}>🔫 Echipament</button>
+					<button class:activ={adminState.sectiuneActiva === 'produse'} onclick={() => adminState.sectiuneActiva = 'produse'}>🛒 Produse</button>
+					<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => adminState.sectiuneActiva = 'comenzi'}>📦 Comenzi</button>
+					<button class:activ={adminState.sectiuneActiva === 'utilizatori'} onclick={() => adminState.sectiuneActiva = 'utilizatori'}>👥 Utilizatori</button>
+					<button class:activ={adminState.sectiuneActiva === 'servicii'} onclick={() => adminState.sectiuneActiva = 'servicii'}>🛠️ Servicii</button>
+					<button class:activ={adminState.sectiuneActiva === 'galerie'} onclick={() => adminState.sectiuneActiva = 'galerie'}>🖼️ Galerie</button>
+					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => adminState.sectiuneActiva = 'notificari'}>📢 Notificări</button>
+					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => adminState.sectiuneActiva = 'site'}>🌐 Conținut Site</button>
 				</nav>
 			</aside>
 
 			<main class="zona-lucru">
-				{#if incarcare && evenimente.length === 0}
+				{#if adminState.incarcare && adminState.evenimente.length === 0}
 					<div class="incarcare">Se încarcă datele...</div>
 				{:else}
-					{#if sectiuneActiva === 'dashboard'}
+					{#if adminState.sectiuneActiva === 'dashboard'}
 						<div class="mobile-only-stats">
 							<StatsGrid 
-								{venituri} 
-								comenziNoi={comenzi.filter(c => c.status === 'nou').length} 
-								{utilTotal} 
-								evenimenteDeFinalizat={evenimente.filter(e => e.status === 'active' && new Date(e.date) < new Date()).length} 
+								venituri={adminState.venituri} 
+								comenziNoi={adminState.comenziNoi} 
+								utilTotal={adminState.utilTotal} 
+								evenimenteDeFinalizat={adminState.evenimenteDeFinalizat} 
 							/>
 						</div>
-					{:else if sectiuneActiva === 'evenimente'}
-						<EventsManager bind:evenimente bind:rezervari {servicii} {refreshEvents} {refreshBookings} />
-					{:else if sectiuneActiva === 'echipament'}
-						<EquipmentManager bind:echipament {refreshEquipment} />
-					{:else if sectiuneActiva === 'produse'}
-						<ShopManager bind:produse {refreshProducts} />
-					{:else if sectiuneActiva === 'comenzi'}
-						<OrdersManager bind:comenzi {refreshOrders} />
-					{:else if sectiuneActiva === 'utilizatori'}
-						<UsersManager bind:utilTotal />
-					{:else if sectiuneActiva === 'servicii'}
-						<ServicesManager bind:servicii bind:parteneri {refreshServices} {refreshPartners} />
-					{:else if sectiuneActiva === 'galerie'}
-						<GalleryManager bind:galerie {refreshGallery} />
-					{:else if sectiuneActiva === 'notificari'}
-						<NotificationsPanel bind:this={notificationsPanelRef} {evenimente} {supabase} />
-					{:else if sectiuneActiva === 'site'}
-						<SiteContentManager bind:continutSite {refreshSite} />
+					{:else if adminState.sectiuneActiva === 'evenimente'}
+						<EventsManager 
+							bind:evenimente={adminState.evenimente} 
+							bind:rezervari={adminState.rezervari} 
+							servicii={adminState.servicii} 
+							refreshEvents={() => adminState.refreshEvents()} 
+							refreshBookings={() => adminState.refreshBookings()} 
+						/>
+					{:else if adminState.sectiuneActiva === 'echipament'}
+						<EquipmentManager bind:echipament={adminState.echipament} refreshEquipment={() => adminState.refreshAll()} />
+					{:else if adminState.sectiuneActiva === 'produse'}
+						<ShopManager bind:produse={adminState.produse} refreshProducts={() => adminState.refreshAll()} />
+					{:else if adminState.sectiuneActiva === 'comenzi'}
+						<OrdersManager bind:comenzi={adminState.comenzi} refreshOrders={() => adminState.refreshAll()} />
+					{:else if adminState.sectiuneActiva === 'utilizatori'}
+						<UsersManager bind:utilTotal={adminState.utilTotal} />
+					{:else if adminState.sectiuneActiva === 'servicii'}
+						<ServicesManager bind:servicii={adminState.servicii} bind:parteneri={adminState.parteneri} refreshServices={() => adminState.refreshAll()} refreshPartners={() => adminState.refreshAll()} />
+					{:else if adminState.sectiuneActiva === 'galerie'}
+						<GalleryManager bind:galerie={adminState.galerie} refreshGallery={() => adminState.refreshAll()} />
+					{:else if adminState.sectiuneActiva === 'notificari'}
+						<NotificationsPanel bind:this={notificationsPanelRef} evenimente={adminState.evenimente} supabase={supabase} />
+					{:else if adminState.sectiuneActiva === 'site'}
+						<SiteContentManager bind:continutSite={adminState.continutSite} refreshSite={() => adminState.refreshAll()} />
 					{/if}
 				{/if}
 			</main>
@@ -259,15 +153,19 @@
 						<button class="btn-icon" onclick={() => mobileMenuOpen = false}>×</button>
 					</div>
 					<nav class="drawer-nav">
-						<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => { sectiuneActiva = 'evenimente'; mobileMenuOpen = false; }}>📅 Evenimente</button>
-						<button class:activ={sectiuneActiva === 'echipament'} onclick={() => { sectiuneActiva = 'echipament'; mobileMenuOpen = false; }}>🔫 Echipament</button>
-						<button class:activ={sectiuneActiva === 'produse'} onclick={() => { sectiuneActiva = 'produse'; mobileMenuOpen = false; }}>🛒 Produse</button>
-						<button class:activ={sectiuneActiva === 'comenzi'} onclick={() => { sectiuneActiva = 'comenzi'; mobileMenuOpen = false; }}>📦 Comenzi</button>
-						<button class:activ={sectiuneActiva === 'utilizatori'} onclick={() => { sectiuneActiva = 'utilizatori'; mobileMenuOpen = false; }}>👥 Utilizatori</button>
-						<button class:activ={sectiuneActiva === 'servicii'} onclick={() => { sectiuneActiva = 'servicii'; mobileMenuOpen = false; }}>🛠️ Servicii</button>
-						<button class:activ={sectiuneActiva === 'galerie'} onclick={() => { sectiuneActiva = 'galerie'; mobileMenuOpen = false; }}>🖼️ Galerie</button>
-						<button class:activ={sectiuneActiva === 'notificari'} onclick={() => { sectiuneActiva = 'notificari'; mobileMenuOpen = false; }}>📢 Notificări</button>
-						<button class:activ={sectiuneActiva === 'site'} onclick={() => { sectiuneActiva = 'site'; mobileMenuOpen = false; }}>🌐 Conținut Site</button>
+						{#each [
+							{ id: 'evenimente', label: '📅 Evenimente' },
+							{ id: 'echipament', label: '🔫 Echipament' },
+							{ id: 'produse', label: '🛒 Produse' },
+							{ id: 'comenzi', label: '📦 Comenzi' },
+							{ id: 'utilizatori', label: '👥 Utilizatori' },
+							{ id: 'servicii', label: '🛠️ Servicii' },
+							{ id: 'galerie', label: '🖼️ Galerie' },
+							{ id: 'notificari', label: '📢 Notificări' },
+							{ id: 'site', label: '🌐 Conținut Site' }
+						] as r}
+							<button class:activ={adminState.sectiuneActiva === r.id} onclick={() => { adminState.sectiuneActiva = r.id; mobileMenuOpen = false; }}>{r.label}</button>
+						{/each}
 					</nav>
 				</div>
 			</div>
@@ -275,13 +173,13 @@
 
 		<!-- Mobile Bottom Nav -->
 		<nav class="mobile-nav" style="display:none;">
-			<button class:activ={sectiuneActiva === 'dashboard'} onclick={() => sectiuneActiva = 'dashboard'}>
+			<button class:activ={adminState.sectiuneActiva === 'dashboard'} onclick={() => adminState.sectiuneActiva = 'dashboard'}>
 				<span>📊</span><small>Stats</small>
 			</button>
-			<button class:activ={sectiuneActiva === 'evenimente'} onclick={() => sectiuneActiva = 'evenimente'}>
+			<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => adminState.sectiuneActiva = 'evenimente'}>
 				<span>📅</span><small>Evenim.</small>
 			</button>
-			<button class:activ={sectiuneActiva === 'comenzi'} onclick={() => sectiuneActiva = 'comenzi'}>
+			<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => adminState.sectiuneActiva = 'comenzi'}>
 				<span>📦</span><small>Comenzi</small>
 			</button>
 			<button onclick={() => mobileMenuOpen = true}>

@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { supabase, STORAGE_BUCKET } from '$lib/supabase';
+	import { STORAGE_BUCKET, supabase } from '$lib/supabase';
 	import Cropper from 'svelte-easy-crop';
 	import { getCroppedImg } from '$lib/utils/image';
+	import { ProductRepository } from '$lib/data/repositories/ProductRepository';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { Product } from '$lib/types';
 	import ProductMobileCard from './view/ProductMobileCard.svelte';
@@ -51,6 +52,7 @@
 		saving = true;
 		try {
 			const payload = {
+				id: editMode ? produsCurent.id : undefined,
 				name: produsCurent.name,
 				price: produsCurent.price,
 				stock: produsCurent.stock,
@@ -61,15 +63,10 @@
 				images: produsCurent.images || []
 			};
 
-			const { error } = editMode
-				? await supabase.from('products').update(payload).eq('id', produsCurent.id)
-				: await supabase.from('products').insert([payload]);
-
-			if (!error) {
-				showProdModal = false;
-				await refreshProducts();
-				showToast('success', editMode ? 'Produs actualizat.' : 'Produs creat.');
-			} else throw error;
+			await ProductRepository.saveProduct(payload as any);
+			showProdModal = false;
+			await refreshProducts();
+			showToast('success', editMode ? 'Produs actualizat.' : 'Produs creat.');
 		} catch (err: any) {
 			showToast('error', err.message);
 		} finally {
@@ -84,20 +81,24 @@
 			confirmLabel: 'Șterge',
 			danger: true
 		})) {
-			const { error } = await supabase.from('products').delete().eq('id', id);
-			if (!error) {
+			try {
+				await ProductRepository.deleteProduct(id);
 				await refreshProducts();
 				showToast('success', 'Produs șters.');
+			} catch (err: any) {
+				showToast('error', err.message);
 			}
 		}
 	}
 
 	async function stergeFotoProdus(url: string) {
-		const newImages = produsCurent.images.filter((item: string) => item !== url);
-		const { error } = await supabase.from('products').update({ images: newImages }).eq('id', produsCurent.id);
-		if (!error) {
+		try {
+			const newImages = produsCurent.images.filter((item: string) => item !== url);
+			await ProductRepository.saveProduct({ id: produsCurent.id, images: newImages });
 			produsCurent.images = newImages;
 			await refreshProducts();
+		} catch (err: any) {
+			showToast('error', err.message);
 		}
 	}
 
@@ -129,7 +130,7 @@
 				produsCurent.image_url = publicUrl;
 			} else if (cropContext === 'product_gallery') {
 				const newImages = [...(produsCurent.images || []), publicUrl];
-				await supabase.from('products').update({ images: newImages }).eq('id', produsCurent.id);
+				await ProductRepository.saveProduct({ id: produsCurent.id, images: newImages });
 				produsCurent.images = newImages;
 			}
 

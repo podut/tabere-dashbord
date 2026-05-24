@@ -23,5 +23,8 @@
 	"dependencies": {
 		"@supabase/supabase-js": "^2.105.4",
 		"svelte-easy-crop": "^5.0.1"
+	},
+	"overrides": {
+		"cookie": "^0.7.0"
 	}
 }

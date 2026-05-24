@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabase';
+	import { UserRepository } from '$lib/data/repositories/UserRepository';
 	import type { Profile } from '$lib/types';
 	import UserMobileCard from './view/UserMobileCard.svelte';
 
@@ -15,23 +15,16 @@
 	async function incarcaUtilizatori(resetPagina = false) {
 		if (resetPagina) utilPagina = 1;
 		utilIncarcare = true;
-		const from = (utilPagina - 1) * utilPerPagina;
-		const to = from + utilPerPagina - 1;
 		
-		let query = supabase
-			.from('profiles')
-			.select('*', { count: 'exact' })
-			.order('created_at', { ascending: false })
-			.range(from, to);
-
-		if (utilCautare.trim()) {
-			query = query.or(`name.ilike.%${utilCautare.trim()}%,email.ilike.%${utilCautare.trim()}%`);
+		try {
+			const { users, total } = await UserRepository.getUsers(utilPagina, utilPerPagina, utilCautare);
+			utilizatori = users;
+			utilTotal = total;
+		} catch (err) {
+			console.error('Error loading users:', err);
+		} finally {
+			utilIncarcare = false;
 		}
-
-		const { data, count } = await query;
-		utilizatori = data || [];
-		utilTotal = count || 0;
-		utilIncarcare = false;
 	}
 
 	$effect(() => {
