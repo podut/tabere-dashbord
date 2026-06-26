@@ -16,7 +16,7 @@ export class EventRepository {
 		const isUpdate = 'id' in event && event.id;
 		
 		const { data, error } = isUpdate
-			? await supabase.from('events').update(event as any).eq('id', event.id).select().single()
+			? await supabase.from('events').update(event as any).eq('id', event.id as string).select().single()
 			: await supabase.from('events').insert([event as any]).select().single();
 
 		if (error) throw error;

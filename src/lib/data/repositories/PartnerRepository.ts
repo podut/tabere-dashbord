@@ -15,7 +15,7 @@ export class PartnerRepository {
 	static async savePartner(partner: Insert<'partners'> | Update<'partners'>) {
 		const isUpdate = 'id' in partner && partner.id;
 		const { data, error } = isUpdate
-			? await supabase.from('partners').update(partner as any).eq('id', partner.id).select().single()
+			? await supabase.from('partners').update(partner as any).eq('id', partner.id as string).select().single()
 			: await supabase.from('partners').insert([partner as any]).select().single();
 		if (error) throw error;
 		return data;

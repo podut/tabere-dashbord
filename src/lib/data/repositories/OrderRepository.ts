@@ -15,7 +15,7 @@ export class OrderRepository {
 	static async updateOrderStatus(id: string, status: string) {
 		const { error } = await supabase
 			.from('orders')
-			.update({ status })
+			.update({ status } as any)
 			.eq('id', id);
 		
 		if (error) throw error;

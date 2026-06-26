@@ -16,7 +16,7 @@ export class ProductRepository {
 		const isUpdate = 'id' in product && product.id;
 		
 		const { data, error } = isUpdate
-			? await supabase.from('products').update(product as any).eq('id', product.id).select().single()
+			? await supabase.from('products').update(product as any).eq('id', product.id as string).select().single()
 			: await supabase.from('products').insert([product as any]).select().single();
 
 		if (error) throw error;

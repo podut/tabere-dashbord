@@ -9,6 +9,7 @@ export interface NotificationPayload {
 	is_recurring?: boolean;
 	recurring_hour?: number;
 	scheduled_at?: string;
+	channel?: string;
 }
 
 export class NotificationRepository {
@@ -19,7 +20,7 @@ export class NotificationRepository {
 	static async autoTransitionNotifications(nowISO: string) {
 		const { error } = await supabase
 			.from('notifications')
-			.update({ status: 'trimis' })
+			.update({ status: 'trimis' } as any)
 			.eq('status', 'programat')
 			.lte('scheduled_at', nowISO);
 
@@ -39,7 +40,7 @@ export class NotificationRepository {
 		let q = supabase.from('notifications').select('*', { count: 'exact' });
 
 		if (statusFilter !== 'all') {
-			q = q.eq('status', statusFilter);
+			q = q.eq('status', statusFilter as any);
 		}
 		q = q.order('created_at', { ascending: false });
 
@@ -59,8 +60,8 @@ export class NotificationRepository {
 	 */
 	static async createNotification(payload: NotificationPayload) {
 		const { data, error } = await supabase
-			.from('notifications')
-			.insert(payload)
+			.from('notifications' as any)
+			.insert(payload as any)
 			.select()
 			.single();
 
