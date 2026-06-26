@@ -17,7 +17,7 @@
 				<th>Client</th>
 				<th>Activitate</th>
 				<th>Telefon</th>
-				<th>Eveniment</th>
+				<th>Eveniment / Cod</th>
 				<th>Poziție</th>
 				<th>Data Cererii</th>
 				<th>Acțiuni</th>
@@ -35,6 +35,11 @@
 							<span class="ev-asociat">{evAsociat.title}</span>
 						{:else}
 							<span class="text-gri">—</span>
+						{/if}
+						{#if r.is_private && r.private_code}
+							<div class="cod-privat-badge" title="Cerere privată">
+								🔒 <code>{r.private_code}</code>
+							</div>
 						{/if}
 					</td>
 					<td>
@@ -78,4 +83,6 @@
 	.btn-converteste { color: var(--primary); border-color: var(--border); }
 	.btn-converteste:hover { background: var(--primary-tint); border-color: var(--primary); }
 	.td-gol { text-align: center; padding: 4rem; color: #999; }
+	.cod-privat-badge { margin-top: 4px; font-size: 1.1rem; color: #6741d9; }
+	.cod-privat-badge code { background: #f3f0ff; border-radius: 4px; padding: 1px 5px; letter-spacing: 0.05em; font-weight: 600; }
 </style>

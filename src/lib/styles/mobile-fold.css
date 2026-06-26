@@ -1,5 +1,8 @@
 /* HTCMX Airsoft Admin — Mobile Optimization (Focus: Samsung Z Fold 4) */
 
+/* Mobile nav ascuns implicit, vizibil doar pe mobile via media query */
+.mobile-nav { display: none; }
+
 /* 1. Reset & Global Base */
 @media (max-width: 600px) {
     :root {
@@ -114,9 +117,10 @@
     .login-card {
         width: 100% !important;
         height: 100% !important;
-        max-height: 100vh !important;
+        max-height: 100dvh !important;
         border-radius: 0 !important;
         padding: 2rem 1.6rem !important;
+        padding-top: calc(2rem + env(safe-area-inset-top, 0px)) !important;
     }
 
     .modal-overlay {
@@ -200,6 +204,11 @@
         from { transform: translateX(100%); }
         to { transform: translateX(0); }
     }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 }
 
 /* 2. Z Fold 4 Folded (Cover Screen) Specifics */
@@ -213,23 +222,35 @@
     }
 }
 
-/* 3. Z Fold 4 Unfolded (Main Screen) */
+/* 3. Z Fold 4 Unfolded / Tablete înguste (601-900px) */
 @media (min-width: 601px) and (max-width: 900px) {
     .layout-continut {
         gap: 1.6rem !important;
     }
-    
+
     .sidebar {
-        width: 7rem !important;
+        width: 6.4rem !important;
         padding: 0.8rem !important;
+        flex-shrink: 0 !important;
     }
-    
-    .sidebar button span {
+
+    .sidebar .nav-label {
         display: none;
     }
-    
+
+    .sidebar .nav-icon {
+        font-size: 2rem;
+        line-height: 1;
+    }
+
     .sidebar button {
         justify-content: center;
-        padding: 1.4rem !important;
+        padding: 1.2rem !important;
+        gap: 0 !important;
+        border-radius: 10px !important;
+    }
+
+    .sidebar button.activ .nav-icon {
+        filter: drop-shadow(0 0 6px rgba(197, 160, 48, 0.5));
     }
 }

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { STORAGE_BUCKET, supabase } from '$lib/supabase';
-	import Cropper from 'svelte-easy-crop';
-	import { getCroppedImg } from '$lib/utils/image';
 	import { ProductRepository } from '$lib/data/repositories/ProductRepository';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { Product } from '$lib/types';
 	import ProductMobileCard from './view/ProductMobileCard.svelte';
+	import ProductModal from './ProductModal.svelte';
+	import ProductGalleryModal from './ProductGalleryModal.svelte';
+	import CropModal from '../Shared/CropModal.svelte';
 
 	let { produse = $bindable([]), refreshProducts }: { 
 		produse: Product[],
@@ -34,9 +34,6 @@
 
 	// --- CROP STATE ---
 	let cropImage = $state<string | null>(null);
-	let crop = $state({ x: 0, y: 0 });
-	let zoom = $state(1);
-	let croppedAreaPixels = $state<any>(null);
 	let cropContext = $state<string | null>(null);
 
 	function deschideProdus(p: any = null) {
@@ -103,7 +100,7 @@
 	}
 
 	// --- LOGICA IMAGINI ---
-	function onFileSelected(e: Event, context: any) {
+	function onFileSelected(e: Event, context: string) {
 		const target = e.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
 			cropContext = context;
@@ -113,15 +110,12 @@
 		}
 	}
 
-	async function handleFinalizeCrop() {
-		if (!cropImage || !croppedAreaPixels) return;
+	async function handleFinalizeCrop(blob: Blob) {
 		incarcareFoto = true;
 		try {
-			const croppedBlob = await getCroppedImg(cropImage, croppedAreaPixels);
-			if (!croppedBlob) throw new Error('Eroare la procesare.');
 			const fileName = `${Date.now()}.jpg`;
 			const filePath = `product/${fileName}`;
-			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, croppedBlob);
+			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(filePath, blob);
 			if (uploadError) throw uploadError;
 			const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
 			const publicUrl = data.publicUrl;
@@ -198,6 +192,36 @@
 	</div>
 </div>
 
+{#if showProdModal}
+	<ProductModal
+		bind:produs={produsCurent}
+		{editMode}
+		{saving}
+		onClose={() => (showProdModal = false)}
+		onSave={salveazaProdus}
+		{onFileSelected}
+	/>
+{/if}
+
+{#if showProdGalModal}
+	<ProductGalleryModal
+		bind:produs={produsCurent}
+		onClose={() => (showProdGalModal = false)}
+		{onFileSelected}
+		onDeletePhoto={stergeFotoProdus}
+	/>
+{/if}
+
+{#if cropImage}
+	<CropModal
+		{cropImage}
+		aspect={1/1}
+		saving={incarcareFoto}
+		onFinish={handleFinalizeCrop}
+		onCancel={() => (cropImage = null)}
+	/>
+{/if}
+
 <style>
 	.shop-table-container {
 		background: var(--bg-card);
@@ -246,137 +270,4 @@
 		.desktop-only-table { display: none; }
 		.mobile-only-grid { display: block; padding: 0.5rem; }
 	}
-
-	.galerie-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-		gap: 1.6rem;
-		padding: 1.6rem;
-		background: rgba(0,0,0,0.2);
-		border-radius: 12px;
-	}
-
-	.foto-card-prod {
-		position: relative;
-		border-radius: 12px;
-		overflow: hidden;
-		border: 1px solid var(--border);
-		aspect-ratio: 1/1;
-	}
-
-	.foto-card-prod img { width: 100%; height: 100%; object-fit: cover; }
-
-	.btn-sterge-foto {
-		position: absolute;
-		top: 0.8rem;
-		right: 0.8rem;
-		background: var(--danger);
-		color: white;
-		border: none;
-		border-radius: 50%;
-		width: 2.8rem;
-		height: 2.8rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		cursor: pointer;
-		font-size: 1.8rem;
-		box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-		transition: all 0.2s;
-	}
-
-	.btn-sterge-foto:hover { transform: scale(1.1); background: #c0392b; }
 </style>
-
-<!-- MODAL PRODUS -->
-{#if showProdModal}
-	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 55rem; max-height: 90vh; overflow-y: auto;">
-			<h2>{editMode ? 'Editează' : 'Adaugă'} Produs</h2>
-			<form onsubmit={salveazaProdus}>
-				<div class="camp"><label>Nume Produs</label><input bind:value={produsCurent.name} required /></div>
-				
-				<div class="camp">
-					<label>Imagine Principală</label>
-					<div class="upload-zone-wrapper" style="margin-bottom: 1.6rem;">
-						<input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'product')} id="prod-file" style="display:none" />
-						<label for="prod-file" class="buton-iesire" style="display:inline-block; width:100%; text-align:center; padding: 2.4rem; border-style: dashed; cursor: pointer;">
-							{produsCurent.image_url ? 'Schimbă Imaginea' : 'Încarcă Imagine Produs'}
-						</label>
-					</div>
-				</div>
-
-				{#if produsCurent.image_url}
-					<div style="margin-bottom: 2.4rem;">
-						<img src={produsCurent.image_url} alt="" style="width:100%; height:18rem; object-fit:cover; border-radius:12px; border: 1px solid var(--border);" />
-					</div>
-				{/if}
-
-				<div class="camp"><label>Descriere Scurtă</label><input bind:value={produsCurent.description} placeholder="Apare în lista de produse" /></div>
-				<div class="camp"><label>Descriere Detaliată</label><textarea bind:value={produsCurent.full_desc} style="width:100%; height:12rem; border-radius:9px; border:1px solid var(--border); padding:1rem; resize:vertical; font-family:inherit;"></textarea></div>
-				
-				<div class="form-row-2col">
-					<div class="camp"><label>Preț (RON)</label><input type="number" bind:value={produsCurent.price} required step="0.01" /></div>
-					<div class="camp"><label>Stoc Disponibil</label><input type="number" bind:value={produsCurent.stock} required /></div>
-				</div>
-
-				<div class="camp">
-					<label>Mărimi (separate prin virgulă)</label>
-					<input placeholder="ex: S, M, L, XL" value={produsCurent.sizes?.join(', ')} onchange={(e) => produsCurent.sizes = e.currentTarget.value.split(',').map(s => s.trim()).filter(s => s)} />
-				</div>
-
-				<div style="display:flex; gap:1.2rem; margin-top:2.4rem;">
-					<button type="button" class="buton-iesire" style="flex:1" onclick={() => (showProdModal = false)}>Anulează</button>
-					<button type="submit" class="buton-primar" style="flex:2" disabled={saving}>{saving ? 'Se salvează...' : 'Salvează Produs'}</button>
-				</div>
-			</form>
-		</div>
-	</div>
-{/if}
-
-<!-- MODAL GALERIE PRODUS -->
-{#if showProdGalModal}
-	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 85rem; max-height: 85vh; display: flex; flex-direction: column;">
-			<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2.4rem; border-bottom: 1px solid var(--border); padding-bottom: 1.6rem;">
-				<h2 style="margin:0;">Galerie: <span style="color:var(--primary);">{produsCurent.name}</span></h2>
-				<button class="btn-icon" onclick={() => showProdGalModal = false} style="font-size: 2rem;">×</button>
-			</div>
-			
-			<div class="camp">
-				<label>Adaugă imagini noi în galerie</label>
-				<input type="file" accept="image/*" onchange={(e) => onFileSelected(e, 'product_gallery')} />
-			</div>
-
-			<div class="galerie-grid">
-				{#each produsCurent.images || [] as url}
-					<div class="foto-card-prod">
-						<img src={url} alt="" />
-						<button class="btn-sterge-foto" onclick={() => stergeFotoProdus(url)}>×</button>
-					</div>
-				{:else}
-					<p class="td-gol" style="grid-column: 1/-1;">Nicio imagine în galerie.</p>
-				{/each}
-			</div>
-			
-			<div style="margin-top: 2.4rem; display: flex; justify-content: flex-end;">
-				<button class="buton-iesire" style="min-width: 15rem;" onclick={() => showProdGalModal = false}>Închide</button>
-			</div>
-		</div>
-	</div>
-{/if}
-
-{#if cropImage}
-	<div class="modal-overlay" style="z-index: 2000;">
-		<div class="login-card" style="max-width: 90rem; height: 90vh; display: flex; flex-direction: column;">
-			<h2>Decupează Imaginea</h2>
-			<div style="flex: 1; position: relative; background: #222; border-radius: 12px; overflow: hidden; margin-bottom: 2rem;">
-				<Cropper image={cropImage} bind:crop bind:zoom aspect={1/1} oncropcomplete={({ pixels }) => (croppedAreaPixels = pixels)} />
-			</div>
-			<div style="display: flex; gap: 1rem;">
-				<button class="buton-iesire" style="flex: 1" onclick={() => cropImage = null}>Anulează</button>
-				<button class="buton-primar" style="flex: 2" onclick={handleFinalizeCrop} disabled={incarcareFoto}>{incarcareFoto ? 'Se salvează...' : 'Finalizează'}</button>
-			</div>
-		</div>
-	</div>
-{/if}

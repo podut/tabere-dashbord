@@ -2,9 +2,10 @@
 	import Cropper from 'svelte-easy-crop';
 	import { getCroppedImg } from '$lib/utils/image';
 
-	let { cropImage, saving, onFinish, onCancel }: {
+	let { cropImage, saving, aspect = 16 / 9, onFinish, onCancel }: {
 		cropImage: string;
 		saving: boolean;
+		aspect?: number;
 		onFinish: (blob: Blob) => void;
 		onCancel: () => void;
 	} = $props();
@@ -35,7 +36,7 @@
 				image={cropImage}
 				bind:crop
 				bind:zoom
-				aspect={16 / 9}
+				{aspect}
 				oncropcomplete={({ pixels }) => (croppedAreaPixels = pixels)}
 			/>
 		</div>

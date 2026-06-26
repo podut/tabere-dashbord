@@ -75,20 +75,90 @@
 			const fileName = `site/${sectionId}_${Date.now()}.jpg`;
 			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, file);
 			if (uploadError) { showToast('error', uploadError.message); return; }
-			
+
 			const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
 			const publicUrl = data.publicUrl;
-			
+
 			const row = continutSite.find((c: any) => c.section_id === sectionId);
 			const updatedContent = { ...(row?.content || {}), image: publicUrl };
 			await supabase.from('website_content').upsert({ section_id: sectionId, content: updatedContent }, { onConflict: 'section_id' });
 			await refreshSite();
 		}
 	}
+
+	async function onOnboardingImagesSelected(e: Event) {
+		const target = e.target as HTMLInputElement;
+		if (!target.files || target.files.length === 0) return;
+		saving = true;
+		try {
+			const row = continutSite.find((c: any) => c.section_id === 'onboarding');
+			const existingImages: string[] = row?.images || [];
+			const newUrls: string[] = [];
+
+			for (const file of Array.from(target.files)) {
+				const fileName = `site/onboarding_${Date.now()}_${file.name}`;
+				const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, file);
+				if (uploadError) { showToast('error', uploadError.message); continue; }
+				const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+				newUrls.push(data.publicUrl);
+			}
+
+			const updatedImages = [...existingImages, ...newUrls];
+			await supabase.from('website_content').upsert(
+				{ section_id: 'onboarding', images: updatedImages },
+				{ onConflict: 'section_id' }
+			);
+			await refreshSite();
+			showToast('success', `${newUrls.length} imagine(i) adăugate.`);
+		} finally {
+			saving = false;
+			target.value = '';
+		}
+	}
+
+	async function removeOnboardingImage(url: string) {
+		const row = continutSite.find((c: any) => c.section_id === 'onboarding');
+		if (!row) return;
+		const updatedImages = (row.images || []).filter((u: string) => u !== url);
+		await supabase.from('website_content').upsert(
+			{ section_id: 'onboarding', images: updatedImages },
+			{ onConflict: 'section_id' }
+		);
+		await refreshSite();
+	}
+
+	const onboardingSection = $derived(continutSite.find((s: any) => s.section_id === 'onboarding'));
 </script>
 
 <div class="site-content-manager">
 	<p class="subtitle-text">Gerează imaginile de tip "Hero" și textele principale ale paginilor din aplicația mobilă.</p>
+
+	<!-- Secțiunea Onboarding (poze site) -->
+	<div class="onboarding-section">
+		<div class="onboarding-header">
+			<div>
+				<h3 class="onboarding-title">Poze Onboarding</h3>
+				<p class="onboarding-desc">Imagini afișate la prima lansare a aplicației mobile. Poți adăuga mai multe imagini pentru un slideshow.</p>
+			</div>
+			<label class="btn-add-photos" title="Adaugă imagini" class:disabled={saving}>
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+				{saving ? 'Se încarcă...' : 'Adaugă Poze'}
+				<input type="file" accept="image/*" multiple style="display:none;" onchange={onOnboardingImagesSelected} disabled={saving} />
+			</label>
+		</div>
+		<div class="onboarding-images">
+			{#if onboardingSection?.images?.length > 0}
+				{#each onboardingSection.images as imgUrl (imgUrl)}
+					<div class="onboarding-img-card">
+						<img src={imgUrl} alt="" class="onboarding-img" />
+						<button class="btn-remove-img" onclick={() => removeOnboardingImage(imgUrl)} title="Elimină">✕</button>
+					</div>
+				{/each}
+			{:else}
+				<div class="onboarding-empty">Nicio imagine adăugată. Aplicația va folosi imaginile de rezervă.</div>
+			{/if}
+		</div>
+	</div>
 
 	<div class="site-grid">
 		{#each continutSite.filter((s: any) => ['home_hero', 'services_hero', 'events_hero'].includes(s.section_id)) as sec}
@@ -121,6 +191,20 @@
 
 <style>
 	.subtitle-text { color: var(--text-grey); font-size: 1.4rem; margin-bottom: 2.4rem; font-weight: 500; }
+
+	.onboarding-section { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); padding: 2.4rem; margin-bottom: 3rem; }
+	.onboarding-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.6rem; margin-bottom: 2rem; }
+	.onboarding-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.4rem; }
+	.onboarding-desc { font-size: 1.3rem; color: var(--text-grey); margin: 0; }
+	.btn-add-photos { display: flex; align-items: center; gap: 0.6rem; background: var(--primary); color: var(--bg-dark); padding: 0.9rem 1.8rem; border-radius: 10px; font-size: 1.4rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
+	.btn-add-photos:hover { opacity: 0.85; }
+	.btn-add-photos.disabled { opacity: 0.5; pointer-events: none; }
+	.onboarding-images { display: flex; flex-wrap: wrap; gap: 1.2rem; }
+	.onboarding-img-card { position: relative; width: 14rem; height: 10rem; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+	.onboarding-img { width: 100%; height: 100%; object-fit: cover; }
+	.btn-remove-img { position: absolute; top: 0.4rem; right: 0.4rem; background: rgba(0,0,0,0.65); color: #fff; border: none; border-radius: 50%; width: 2.2rem; height: 2.2rem; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+	.btn-remove-img:hover { background: rgba(220,53,69,0.85); }
+	.onboarding-empty { color: var(--text-grey); font-style: italic; font-size: 1.3rem; padding: 1rem 0; }
 	.site-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(32rem, 1fr)); gap: 2.4rem; }
 	
 	.site-card {

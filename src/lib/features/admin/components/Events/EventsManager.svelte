@@ -10,7 +10,7 @@
 	import ConfirmatiTab from './ConfirmatiTab.svelte';
 	import EventModal from './EventModal.svelte';
 	import GalerieModal from './GalerieModal.svelte';
-	import CropModal from './CropModal.svelte';
+	import CropModal from '../Shared/CropModal.svelte';
 	import RepartizareModal from './RepartizareModal.svelte';
 
 	let { evenimente = $bindable([]), rezervari = $bindable([]), servicii = [], refreshEvents, refreshBookings }: {
@@ -28,6 +28,26 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 
+	// Auto-finalizare la incarcare + tipuri din DB
+	$effect(() => {
+		EventRepository.autoFinalizeEvents().then(() => refreshEvents());
+	});
+
+	let tipuriExistente = $state<string[]>(['Milsim', 'Speedsoft', 'Skirmish', 'Antrenament', 'Privat']);
+
+	async function incarcaTipuri() {
+		try {
+			const { data } = await supabase.rpc('get_event_types');
+			if (data && data.length > 0) {
+				const noi = (data as string[]).filter((t: string) => !tipuriExistente.includes(t));
+				tipuriExistente = [...new Set([...tipuriExistente, ...noi])];
+			}
+		} catch (_) { /* pastreaza defaults */ }
+	}
+
+	// Incarca tipurile la montare
+	$effect(() => { incarcaTipuri(); });
+
 	let showRepartizareModal = $state(false);
 	let bookingDeRepartizat = $state<Booking | null>(null);
 	let pozitiiEveniment = $state<string[]>([]);
@@ -39,7 +59,7 @@
 		date: new Date().toISOString().slice(0, 10),
 		start_time: '10:00', duration: '',
 		location: 'Baza HTCMX Airsoft', price: 50, currency: 'RON',
-		status: 'active', is_public: true, max_participants: 30,
+		status: 'active', is_public: true, event_code: '', max_participants: 30,
 		positions: [], image_url: '', gallery: [], origin_booking_id: ''
 	});
 
@@ -60,7 +80,7 @@
 				date: new Date().toISOString().slice(0, 10),
 				start_time: '10:00', duration: '',
 				location: 'Baza HTCMX Airsoft', price: 50, currency: 'RON',
-				status: 'active', is_public: true, max_participants: 30,
+				status: 'active', is_public: true, event_code: '', max_participants: 30,
 				positions: [], image_url: '', gallery: [], origin_booking_id: ''
 			};
 		showEvModal = true;
@@ -74,8 +94,8 @@
 				? evenimentCurent.date.slice(0, 10) + 'T12:00:00'
 				: new Date().toISOString();
 
-			const payload = {
-				id: editMode ? evenimentCurent.id : undefined,
+			// id inclus DOAR la editare — la INSERT Supabase generează UUID automat
+			const payload: Record<string, unknown> = {
 				title: evenimentCurent.title,
 				type: evenimentCurent.type || '',
 				description: evenimentCurent.description,
@@ -89,12 +109,19 @@
 				status: evenimentCurent.status,
 				active: evenimentCurent.status === 'active',
 				is_public: evenimentCurent.is_public ?? true,
+				event_code: evenimentCurent.event_code || '',
+				end_date: evenimentCurent.end_time || evenimentCurent.end_date || '',
 				max_participants: evenimentCurent.max_participants || 30,
 				positions: evenimentCurent.positions || [],
 				image_url: evenimentCurent.image_url,
 				gallery: evenimentCurent.gallery || [],
 				origin_booking_id: evenimentCurent.origin_booking_id || ''
 			};
+
+			// La editare adaugam id-ul — la creare il omitem (Supabase genereaza UUID)
+			if (editMode && evenimentCurent.id) {
+				payload.id = evenimentCurent.id;
+			}
 
 			await EventRepository.saveEvent(payload as any);
 
@@ -165,9 +192,9 @@
 
 	async function mutaParticipant(bookingId: string, newPosition: string) {
 		try {
-			await BookingRepository.updateBooking(bookingId, { selected_position: newPosition });
+			await BookingRepository.assignPosition(bookingId, newPosition);
 			await refreshBookings();
-			showToast('success', `Mutat pe poziția "${newPosition}".`);
+			showToast('success', `Mutat pe poziția "${newPosition}" — status: Confirmat.`);
 		} catch (err: any) {
 			showToast('error', err.message);
 		}
@@ -237,19 +264,24 @@
 	function convertesteInEveniment(booking: Booking) {
 		const srv = servicii.find(s => s.title === booking.activity_title);
 		
+		const isPrivate = booking.is_private && !!booking.private_code;
 		evenimentCurent = {
-			title: `${booking.activity_title} - ${booking.nume_client}`,
+			title: `${booking.activity_title} — ${booking.nume_client}`,
+			type: isPrivate ? 'Privat' : 'Milsim',
 			description: srv?.description || `Creat din rezervarea nr. ${booking.id.slice(0, 8)}.`,
 			date: booking.preferred_date || new Date().toISOString().slice(0, 10),
 			start_time: booking.preferred_time || '10:00',
 			duration: srv?.duration || '6 ore',
 			capacity: srv?.capacity || '',
 			location: 'Baza HTCMX Airsoft',
-			price: srv?.price || 0, 
-			currency: 'RON', status: 'active', is_public: true,
-			max_participants: Number(srv?.capacity?.split('-')?.[1]) || 30, 
-			positions: srv?.positions || [], 
-			image_url: srv?.image_url || '', 
+			price: srv?.price || 0,
+			currency: 'RON', status: 'active',
+			// Daca cererea e privata, evenimentul devine privat cu codul din cerere
+			is_public: !isPrivate,
+			event_code: isPrivate ? (booking.private_code ?? '') : '',
+			max_participants: Number(srv?.capacity?.split('-')?.[1]) || 30,
+			positions: srv?.positions || [],
+			image_url: srv?.image_url || '',
 			gallery: srv?.gallery || [],
 			origin_booking_id: booking.id
 		};
@@ -370,6 +402,7 @@
 		bind:eveniment={evenimentCurent}
 		{editMode}
 		{saving}
+		{tipuriExistente}
 		onClose={() => (showEvModal = false)}
 		onSave={salveazaEveniment}
 		{onFileSelected}
