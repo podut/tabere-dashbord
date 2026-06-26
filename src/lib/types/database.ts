@@ -37,19 +37,21 @@ export type Database = {
       bookings: {
         Row: {
           activity_title: string
-          client_address: string | null
-          client_city: string | null
+          client_address: string
+          client_city: string
           created_at: string
           device_id: string
           email: string | null
           event_id: string | null
           id: string
+          is_private: boolean
           is_service_request: boolean
-          judet: string | null
+          judet: string
           mesaj: string | null
           nume_client: string
           preferred_date: string | null
           preferred_time: string | null
+          private_code: string
           selected_position: string | null
           status: Database["public"]["Enums"]["booking_status"]
           telefon: string
@@ -58,19 +60,21 @@ export type Database = {
         }
         Insert: {
           activity_title: string
-          client_address?: string | null
-          client_city?: string | null
+          client_address?: string
+          client_city?: string
           created_at?: string
           device_id?: string
           email?: string | null
           event_id?: string | null
           id?: string
+          is_private?: boolean
           is_service_request?: boolean
-          judet?: string | null
+          judet?: string
           mesaj?: string | null
           nume_client: string
           preferred_date?: string | null
           preferred_time?: string | null
+          private_code?: string
           selected_position?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           telefon: string
@@ -79,19 +83,21 @@ export type Database = {
         }
         Update: {
           activity_title?: string
-          client_address?: string | null
-          client_city?: string | null
+          client_address?: string
+          client_city?: string
           created_at?: string
           device_id?: string
           email?: string | null
           event_id?: string | null
           id?: string
+          is_private?: boolean
           is_service_request?: boolean
-          judet?: string | null
+          judet?: string
           mesaj?: string | null
           nume_client?: string
           preferred_date?: string | null
           preferred_time?: string | null
+          private_code?: string
           selected_position?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           telefon?: string
@@ -159,17 +165,17 @@ export type Database = {
           description: string
           duration: string | null
           end_date: string | null
-          event_code: string | null
+          event_code: string
           gallery: string[] | null
           id: string
           image_url: string | null
           is_public: boolean
-          location: string | null
+          location: string
           max_participants: number | null
-          origin_booking_id: string | null
+          origin_booking_id: string
           positions: string[] | null
           price: number
-          start_time: string | null
+          start_time: string
           status: Database["public"]["Enums"]["event_status"]
           title: string
           type: string
@@ -184,17 +190,17 @@ export type Database = {
           description?: string
           duration?: string | null
           end_date?: string | null
-          event_code?: string | null
+          event_code?: string
           gallery?: string[] | null
           id?: string
           image_url?: string | null
           is_public?: boolean
-          location?: string | null
+          location?: string
           max_participants?: number | null
-          origin_booking_id?: string | null
+          origin_booking_id?: string
           positions?: string[] | null
           price?: number
-          start_time?: string | null
+          start_time?: string
           status?: Database["public"]["Enums"]["event_status"]
           title: string
           type?: string
@@ -209,17 +215,17 @@ export type Database = {
           description?: string
           duration?: string | null
           end_date?: string | null
-          event_code?: string | null
+          event_code?: string
           gallery?: string[] | null
           id?: string
           image_url?: string | null
           is_public?: boolean
-          location?: string | null
+          location?: string
           max_participants?: number | null
-          origin_booking_id?: string | null
+          origin_booking_id?: string
           positions?: string[] | null
           price?: number
-          start_time?: string | null
+          start_time?: string
           status?: Database["public"]["Enums"]["event_status"]
           title?: string
           type?: string
@@ -251,51 +257,77 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_reads: {
+        Row: {
+          notification_id: string
+          device_id: string
+          user_id: string | null
+          read_at: string
+        }
+        Insert: {
+          notification_id: string
+          device_id: string
+          user_id?: string | null
+          read_at?: string
+        }
+        Update: {
+          notification_id?: string
+          device_id?: string
+          user_id?: string | null
+          read_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
+          channel: Database["public"]["Enums"]["notif_channel"]
           created_at: string
           id: string
-          is_read: boolean | null
-          is_recurring: boolean | null
           open_count: number
-          recurring_hour: number | null
           scheduled_at: string
           status: Database["public"]["Enums"]["notif_status"]
+          target_device_id: string | null
           target_event_id: string | null
-          target_type: string | null
+          target_type: string
+          target_user_id: string | null
           title: string
-          user_id: string | null
         }
         Insert: {
           body: string
+          channel?: Database["public"]["Enums"]["notif_channel"]
           created_at?: string
           id?: string
-          is_read?: boolean | null
-          is_recurring?: boolean | null
           open_count?: number
-          recurring_hour?: number | null
           scheduled_at: string
           status?: Database["public"]["Enums"]["notif_status"]
+          target_device_id?: string | null
           target_event_id?: string | null
-          target_type?: string | null
+          target_type?: string
+          target_user_id?: string | null
           title: string
-          user_id?: string | null
         }
         Update: {
           body?: string
+          channel?: Database["public"]["Enums"]["notif_channel"]
           created_at?: string
           id?: string
-          is_read?: boolean | null
-          is_recurring?: boolean | null
           open_count?: number
-          recurring_hour?: number | null
           scheduled_at?: string
           status?: Database["public"]["Enums"]["notif_status"]
+          target_device_id?: string | null
           target_event_id?: string | null
-          target_type?: string | null
+          target_type?: string
+          target_user_id?: string | null
           title?: string
-          user_id?: string | null
         }
         Relationships: [
           {
@@ -357,7 +389,7 @@ export type Database = {
           client_address: string | null
           client_city: string | null
           client_county: string | null
-          client_name: string | null
+          client_name: string
           client_phone: string | null
           created_at: string
           device_id: string | null
@@ -370,7 +402,7 @@ export type Database = {
           client_address?: string | null
           client_city?: string | null
           client_county?: string | null
-          client_name?: string | null
+          client_name?: string
           client_phone?: string | null
           created_at?: string
           device_id?: string | null
@@ -383,7 +415,7 @@ export type Database = {
           client_address?: string | null
           client_city?: string | null
           client_county?: string | null
-          client_name?: string | null
+          client_name?: string
           client_phone?: string | null
           created_at?: string
           device_id?: string | null
@@ -391,36 +423,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"]
           total_price?: number
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      pages: {
-        Row: {
-          created_at: string
-          id: string
-          is_published: boolean
-          sections: Json | null
-          slug: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_published?: boolean
-          sections?: Json | null
-          slug: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_published?: boolean
-          sections?: Json | null
-          slug?: string
-          title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -451,45 +453,24 @@ export type Database = {
         }
         Relationships: []
       }
-      posts: {
+      participant_profiles: {
         Row: {
-          author: string | null
-          category: string | null
-          content: string | null
-          created_at: string
-          excerpt: string | null
-          featured_image: string | null
-          id: string
-          is_published: boolean
-          slug: string
-          title: string
-          updated_at: string
+          avatar_url: string | null
+          device_id: string
+          name: string
+          updated_at: string | null
         }
         Insert: {
-          author?: string | null
-          category?: string | null
-          content?: string | null
-          created_at?: string
-          excerpt?: string | null
-          featured_image?: string | null
-          id?: string
-          is_published?: boolean
-          slug: string
-          title: string
-          updated_at?: string
+          avatar_url?: string | null
+          device_id: string
+          name?: string
+          updated_at?: string | null
         }
         Update: {
-          author?: string | null
-          category?: string | null
-          content?: string | null
-          created_at?: string
-          excerpt?: string | null
-          featured_image?: string | null
-          id?: string
-          is_published?: boolean
-          slug?: string
-          title?: string
-          updated_at?: string
+          avatar_url?: string | null
+          device_id?: string
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -549,33 +530,36 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
-          date_of_birth: string | null
-          device_id: string | null
+          date_of_birth: string
+          device_id: string
           email: string | null
           id: string
           name: string
-          phone: string | null
+          phone: string
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
-          date_of_birth?: string | null
-          device_id?: string | null
+          date_of_birth?: string
+          device_id?: string
           email?: string | null
           id: string
           name?: string
-          phone?: string | null
+          phone?: string
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
-          date_of_birth?: string | null
-          device_id?: string | null
+          date_of_birth?: string
+          device_id?: string
           email?: string | null
           id?: string
           name?: string
-          phone?: string | null
+          phone?: string
           role?: Database["public"]["Enums"]["user_role"]
         }
         Relationships: []
@@ -585,12 +569,12 @@ export type Database = {
           active: boolean
           age_target: string | null
           capacity: string | null
-          category: string | null
+          category: string
           created_at: string
           description: string | null
-          duration: string | null
+          duration: string
           full_desc: string | null
-          gallery: string[] | null
+          gallery: Json | null
           id: string
           image_url: string | null
           includes: string[] | null
@@ -607,12 +591,12 @@ export type Database = {
           active?: boolean
           age_target?: string | null
           capacity?: string | null
-          category?: string | null
+          category?: string
           created_at?: string
           description?: string | null
-          duration?: string | null
+          duration?: string
           full_desc?: string | null
-          gallery?: string[] | null
+          gallery?: Json | null
           id?: string
           image_url?: string | null
           includes?: string[] | null
@@ -629,12 +613,12 @@ export type Database = {
           active?: boolean
           age_target?: string | null
           capacity?: string | null
-          category?: string | null
+          category?: string
           created_at?: string
           description?: string | null
-          duration?: string | null
+          duration?: string
           full_desc?: string | null
-          gallery?: string[] | null
+          gallery?: Json | null
           id?: string
           image_url?: string | null
           includes?: string[] | null
@@ -649,39 +633,6 @@ export type Database = {
         }
         Relationships: []
       }
-      trainings: {
-        Row: {
-          active: boolean
-          created_at: string
-          description: string | null
-          duration: string | null
-          id: string
-          image_url: string | null
-          level: string | null
-          title: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          duration?: string | null
-          id?: string
-          image_url?: string | null
-          level?: string | null
-          title: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          description?: string | null
-          duration?: string | null
-          id?: string
-          image_url?: string | null
-          level?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
       website_content: {
         Row: {
           content: Json | null
@@ -692,7 +643,7 @@ export type Database = {
           last_updated: string
           order: number | null
           section_id: string
-          styles: Json | null
+          styles: Json
           subtitle: string | null
           title: string | null
         }
@@ -705,7 +656,7 @@ export type Database = {
           last_updated?: string
           order?: number | null
           section_id: string
-          styles?: Json | null
+          styles?: Json
           subtitle?: string | null
           title?: string | null
         }
@@ -718,7 +669,7 @@ export type Database = {
           last_updated?: string
           order?: number | null
           section_id?: string
-          styles?: Json | null
+          styles?: Json
           subtitle?: string | null
           title?: string | null
         }
@@ -726,20 +677,80 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      bookings_participant_view: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          event_id: string | null
+          position: string | null
+          status: Database["public"]["Enums"]["booking_status"] | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      events_with_counts: {
+        Row: {
+          active: boolean
+          capacity: string | null
+          created_at: string
+          currency: string | null
+          date: string
+          description: string
+          duration: string | null
+          end_date: string | null
+          event_code: string
+          gallery: string[] | null
+          id: string
+          image_url: string | null
+          is_public: boolean
+          location: string
+          max_participants: number | null
+          origin_booking_id: string
+          participants_count: number
+          positions: string[] | null
+          price: number
+          start_time: string
+          status: Database["public"]["Enums"]["event_status"]
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          id: string
+          name: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
     }
     Functions: {
+      add_event_gallery_photos: {
+        Args: { p_event_id: string; p_urls: string[] }
+        Returns: undefined
+      }
       auto_transition_notifications: { Args: never; Returns: undefined }
+      claim_device_bookings: {
+        Args: { p_device_id: string }
+        Returns: undefined
+      }
       create_order: {
         Args: {
+          p_client_name: string
+          p_client_phone: string
           p_client_address: string
           p_client_city: string
           p_client_county: string
-          p_client_name: string
-          p_client_phone: string
+          p_user_id: string
           p_device_id: string
           p_items: Json
-          p_user_id: string
         }
         Returns: {
           client_address: string | null
@@ -762,8 +773,33 @@ export type Database = {
         }
       }
       dashboard_stats: { Args: never; Returns: Json }
+      enroll_in_event: {
+        Args: {
+          p_event_id: string
+          p_nume_client: string
+          p_email: string
+          p_telefon: string
+          p_device_id: string
+          p_user_id?: string | null
+          p_selected_position?: string
+        }
+        Returns: Json
+      }
       get_booking_stats: { Args: never; Returns: Json }
+      get_event_by_code: { Args: { p_code: string }; Returns: unknown }
+      get_event_types: { Args: never; Returns: unknown }
+      get_my_notifications: { Args: { p_device_id: string }; Returns: unknown }
+      get_my_read_notification_ids: { Args: { p_device_id: string }; Returns: unknown }
+      handle_new_user: { Args: never; Returns: undefined }
       is_admin: { Args: never; Returns: boolean }
+      mark_notification_read: {
+        Args: { p_notification_id: string; p_device_id: string }
+        Returns: undefined
+      }
+      remove_event_gallery_photo: {
+        Args: { p_event_id: string; p_url: string }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
@@ -924,4 +960,3 @@ export const Constants = {
     },
   },
 } as const
-
