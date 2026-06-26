@@ -1,6 +1,8 @@
 import { supabase } from '$lib/supabase';
 import type { Booking, Update } from '$lib/types';
 
+type Callback = (payload: { eventType: 'INSERT' | 'UPDATE' | 'DELETE'; new: Booking; old: Booking }) => void;
+
 export class BookingRepository {
 	static async getBookings() {
 		const { data, error } = await supabase
@@ -10,6 +12,19 @@ export class BookingRepository {
 
 		if (error) throw error;
 		return data || [];
+	}
+
+	static subscribeToChanges(callback: Callback) {
+		return supabase
+			.channel('public:bookings')
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'bookings' },
+				(payload) => {
+					callback(payload as any);
+				}
+			)
+			.subscribe();
 	}
 
 	static async updateBooking(id: string, payload: Update<'bookings'>) {
