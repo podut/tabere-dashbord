@@ -16,8 +16,8 @@ export class EventRepository {
 		const isUpdate = 'id' in event && event.id;
 		
 		const { data, error } = isUpdate
-			? await supabase.from('events').update(event).eq('id', event.id).select().single()
-			: await supabase.from('events').insert([event]).select().single();
+			? await supabase.from('events').update(event as any).eq('id', event.id).select().single()
+			: await supabase.from('events').insert([event as any]).select().single();
 
 		if (error) throw error;
 		return data;
@@ -38,30 +38,33 @@ export class EventRepository {
 	}
 
 	/**
-	 * Finalizează automat evenimentele care au data în trecut.
+	 * Finalizează automat evenimentele a căror dată + oră de start a trecut.
+	 * Compară data evenimentului + start_time cu momentul curent.
 	 */
 	static async autoFinalizeEvents() {
-		const acum = new Date().toISOString();
-		const { data: pastEvents, error: fetchError } = await supabase
+		const { data: events, error } = await supabase
 			.from('events')
-			.select('id')
-			.eq('status', 'active')
-			.lt('date', acum);
+			.select('id, date, start_time')
+			.eq('status', 'active');
 
-		if (fetchError) {
-			console.error('Eroare la preluarea evenimentelor trecute:', fetchError);
-			return;
-		}
+		if (error || !events?.length) return;
 
-		if (pastEvents && pastEvents.length > 0) {
+		const now = new Date();
+		const toFinalize = events
+			.filter(e => {
+				const datePart = e.date?.substring(0, 10);
+				if (!datePart) return false;
+				const timePart = e.start_time?.match(/^\d{2}:\d{2}$/) ? e.start_time : '23:59';
+				return new Date(`${datePart}T${timePart}:00`) < now;
+			})
+			.map(e => e.id);
+
+		if (toFinalize.length > 0) {
 			const { error: updateError } = await supabase
 				.from('events')
 				.update({ status: 'finished', active: false })
-				.in('id', pastEvents.map(e => e.id));
-
-			if (updateError) {
-				console.error('Eroare la auto-finalizarea evenimentelor:', updateError);
-			}
+				.in('id', toFinalize);
+			if (updateError) console.error('Auto-finalizare eșuată:', updateError);
 		}
 	}
 }

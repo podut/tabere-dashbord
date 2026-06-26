@@ -90,15 +90,15 @@
 		<div class="layout-continut">
 			<aside class="sidebar">
 				<nav>
-					<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => adminState.sectiuneActiva = 'evenimente'}>📅 Evenimente</button>
-					<button class:activ={adminState.sectiuneActiva === 'echipament'} onclick={() => adminState.sectiuneActiva = 'echipament'}>🔫 Echipament</button>
-					<button class:activ={adminState.sectiuneActiva === 'produse'} onclick={() => adminState.sectiuneActiva = 'produse'}>🛒 Produse</button>
-					<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => adminState.sectiuneActiva = 'comenzi'}>📦 Comenzi</button>
-					<button class:activ={adminState.sectiuneActiva === 'utilizatori'} onclick={() => adminState.sectiuneActiva = 'utilizatori'}>👥 Utilizatori</button>
-					<button class:activ={adminState.sectiuneActiva === 'servicii'} onclick={() => adminState.sectiuneActiva = 'servicii'}>🛠️ Servicii</button>
-					<button class:activ={adminState.sectiuneActiva === 'galerie'} onclick={() => adminState.sectiuneActiva = 'galerie'}>🖼️ Galerie</button>
-					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => adminState.sectiuneActiva = 'notificari'}>📢 Notificări</button>
-					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => adminState.sectiuneActiva = 'site'}>🌐 Conținut Site</button>
+					<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => adminState.sectiuneActiva = 'evenimente'}><span class="nav-icon">📅</span><span class="nav-label">Evenimente</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'echipament'} onclick={() => adminState.sectiuneActiva = 'echipament'}><span class="nav-icon">🔫</span><span class="nav-label">Echipament</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'produse'} onclick={() => adminState.sectiuneActiva = 'produse'}><span class="nav-icon">🛒</span><span class="nav-label">Produse</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => adminState.sectiuneActiva = 'comenzi'}><span class="nav-icon">📦</span><span class="nav-label">Comenzi</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'utilizatori'} onclick={() => adminState.sectiuneActiva = 'utilizatori'}><span class="nav-icon">👥</span><span class="nav-label">Utilizatori</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'servicii'} onclick={() => adminState.sectiuneActiva = 'servicii'}><span class="nav-icon">🛠️</span><span class="nav-label">Servicii</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'galerie'} onclick={() => adminState.sectiuneActiva = 'galerie'}><span class="nav-icon">🖼️</span><span class="nav-label">Galerie</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => adminState.sectiuneActiva = 'notificari'}><span class="nav-icon">📢</span><span class="nav-label">Notificări</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => adminState.sectiuneActiva = 'site'}><span class="nav-icon">🌐</span><span class="nav-label">Conținut Site</span></button>
 				</nav>
 			</aside>
 
@@ -136,10 +136,10 @@
 					{:else if adminState.sectiuneActiva === 'galerie'}
 						<GalleryManager bind:galerie={adminState.galerie} refreshGallery={() => adminState.refreshAll()} />
 					{:else if adminState.sectiuneActiva === 'notificari'}
-						<NotificationsPanel bind:this={notificationsPanelRef} evenimente={adminState.evenimente} supabase={supabase} />
+						<NotificationsPanel bind:this={notificationsPanelRef} evenimente={adminState.evenimente} />
 					{:else if adminState.sectiuneActiva === 'site'}
 						<SiteContentManager bind:continutSite={adminState.continutSite} refreshSite={() => adminState.refreshAll()} />
-					{/if}
+{/if}
 				{/if}
 			</main>
 		</div>
@@ -162,8 +162,8 @@
 							{ id: 'servicii', label: '🛠️ Servicii' },
 							{ id: 'galerie', label: '🖼️ Galerie' },
 							{ id: 'notificari', label: '📢 Notificări' },
-							{ id: 'site', label: '🌐 Conținut Site' }
-						] as r}
+							{ id: 'site', label: '🌐 Conținut Site' },
+	] as r}
 							<button class:activ={adminState.sectiuneActiva === r.id} onclick={() => { adminState.sectiuneActiva = r.id; mobileMenuOpen = false; }}>{r.label}</button>
 						{/each}
 					</nav>
@@ -172,7 +172,7 @@
 		{/if}
 
 		<!-- Mobile Bottom Nav -->
-		<nav class="mobile-nav" style="display:none;">
+		<nav class="mobile-nav">
 			<button class:activ={adminState.sectiuneActiva === 'dashboard'} onclick={() => adminState.sectiuneActiva = 'dashboard'}>
 				<span>📊</span><small>Stats</small>
 			</button>

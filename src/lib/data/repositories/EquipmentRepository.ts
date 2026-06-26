@@ -16,8 +16,8 @@ export class EquipmentRepository {
 		const isUpdate = 'id' in eq && eq.id;
 		
 		const { data, error } = isUpdate
-			? await supabase.from('equipment').update(eq).eq('id', eq.id).select().single()
-			: await supabase.from('equipment').insert([eq]).select().single();
+			? await supabase.from('equipment').update(eq as any).eq('id', eq.id).select().single()
+			: await supabase.from('equipment').insert([eq as any]).select().single();
 
 		if (error) throw error;
 		return data;

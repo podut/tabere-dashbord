@@ -30,3 +30,5 @@ export type WebsiteContent = Omit<Row<'website_content'>, 'content'> & {
 	content: { image?: string } | null;
 };
 export type Profile = Row<'profiles'>;
+export type ParticipantProfile = Row<'participant_profiles'>;
+export type EventWithCounts = Database['public']['Views']['events_with_counts']['Row'];

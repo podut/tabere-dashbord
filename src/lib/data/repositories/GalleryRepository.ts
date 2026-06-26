@@ -15,8 +15,8 @@ export class GalleryRepository {
 	static async saveImage(image: Insert<'gallery'> | Update<'gallery'>) {
 		const isUpdate = 'id' in image && image.id;
 		const { data, error } = isUpdate
-			? await supabase.from('gallery').update(image).eq('id', image.id).select().single()
-			: await supabase.from('gallery').insert([image]).select().single();
+			? await supabase.from('gallery').update(image as any).eq('id', image.id).select().single()
+			: await supabase.from('gallery').insert([image as any]).select().single();
 		if (error) throw error;
 		return data;
 	}

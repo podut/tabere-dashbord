@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { supabase, STORAGE_BUCKET } from '$lib/supabase';
-	import Cropper from 'svelte-easy-crop';
-	import { getCroppedImg } from '$lib/utils/image';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
 	import type { Equipment } from '$lib/types';
 	import EquipmentMobileCard from './view/EquipmentMobileCard.svelte';
+	import EquipmentModal from './EquipmentModal.svelte';
+	import CropModal from '../Shared/CropModal.svelte';
 
 	let { echipament = $bindable([]), refreshEquipment }: { 
 		echipament: Equipment[],
@@ -15,9 +15,6 @@
 	let editMode = $state(false);
 	let incarcareFoto = $state(false);
 	let cropImage = $state<string | null>(null);
-	let crop = $state({ x: 0, y: 0 });
-	let zoom = $state(1);
-	let croppedAreaPixels = $state<any>(null);
 
 	let eqCurent = $state<any>({
 		id: '',
@@ -94,14 +91,11 @@
 		}
 	}
 
-	async function handleFinalizeCrop() {
-		if (!cropImage || !croppedAreaPixels) return;
+	async function handleFinalizeCrop(blob: Blob) {
 		incarcareFoto = true;
 		try {
-			const croppedBlob = await getCroppedImg(cropImage, croppedAreaPixels);
-			if (!croppedBlob) throw new Error('Eroare la procesare imagine.');
 			const fileName = `equipment/${Date.now()}.jpg`;
-			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, croppedBlob);
+			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, blob);
 			if (uploadError) throw uploadError;
 			const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
 			eqCurent.image_url = data.publicUrl;
@@ -180,61 +174,23 @@
 </div>
 
 {#if showEqModal}
-	<div class="modal-overlay">
-		<div class="login-card" style="max-width: 60rem;">
-			<h2>{editMode ? 'Editează' : 'Adaugă'} {eqCurent.parent_id ? 'Produs' : 'Secțiune'}</h2>
-			<form onsubmit={salveazaEq}>
-				<div class="camp"><label for="eq-title">Denumire</label><input id="eq-title" bind:value={eqCurent.title} required /></div>
-				<div class="camp"><label for="eq-desc">Descriere</label><textarea id="eq-desc" bind:value={eqCurent.description} style="width:100%; height:8rem; border-radius:9px; border:1px solid var(--border); padding:1rem;"></textarea></div>
-
-				<div class="form-row-2col">
-					<div class="camp">
-						<label for="eq-cat">Categorie</label>
-						<select id="eq-cat" bind:value={eqCurent.category} style="width:100%; padding:1.2rem; border-radius:9px; border:1px solid var(--border);">
-							<option value="Armament">Armament</option><option value="Protectie">Protecție</option><option value="Accesorii">Accesorii</option><option value="Sub-item">Produs</option>
-						</select>
-					</div>
-					<div class="camp"><label for="eq-order">Ordine</label><input id="eq-order" type="number" bind:value={eqCurent.order} /></div>
-				</div>
-
-				<div class="camp">
-					<label>Imagine</label>
-					<div class="upload-zone-wrapper">
-						<input type="file" accept="image/*" onchange={onFileSelected} id="eq-file-input" style="display:none" />
-						<label for="eq-file-input" class="buton-iesire" style="display:inline-block; width:100%; text-align:center; padding: 2rem; border-style: dashed; cursor: pointer;">
-							{eqCurent.image_url ? 'Schimbă Imaginea' : 'Apasă pentru a încărca imagine'}
-						</label>
-					</div>
-				</div>
-				
-				{#if eqCurent.image_url}
-					<div style="margin-bottom: 2rem;">
-						<img src={eqCurent.image_url} alt="" style="width:100%; height:16rem; object-fit:cover; border-radius:12px; border: 1px solid var(--border);" />
-					</div>
-				{/if}
-
-				<div style="display:flex; gap: 1rem; margin-top: 2rem;">
-					<button type="button" class="buton-iesire" style="flex: 1" onclick={() => (showEqModal = false)}>Anulează</button>
-					<button type="submit" class="buton-primar" style="flex: 2">Salvează</button>
-				</div>
-			</form>
-		</div>
-	</div>
+	<EquipmentModal
+		bind:eq={eqCurent}
+		{editMode}
+		onClose={() => (showEqModal = false)}
+		onSave={salveazaEq}
+		{onFileSelected}
+	/>
 {/if}
 
 {#if cropImage}
-	<div class="modal-overlay" style="z-index: 2000;">
-		<div class="login-card" style="max-width: 80rem; height: 80vh; display: flex; flex-direction: column;">
-			<h2>Decupează Imaginea</h2>
-			<div style="flex: 1; position: relative; background: #222; border-radius: 12px; overflow: hidden; margin-bottom: 2rem;">
-				<Cropper image={cropImage} bind:crop bind:zoom aspect={1/1} oncropcomplete={({ pixels }) => (croppedAreaPixels = pixels)} />
-			</div>
-			<div style="display: flex; gap: 1rem;">
-				<button class="buton-iesire" style="flex: 1" onclick={() => cropImage = null}>Anulează</button>
-				<button class="buton-primar" style="flex: 2" onclick={handleFinalizeCrop} disabled={incarcareFoto}>{incarcareFoto ? 'Se salvează...' : 'Finalizează'}</button>
-			</div>
-		</div>
-	</div>
+	<CropModal
+		{cropImage}
+		aspect={1/1}
+		saving={incarcareFoto}
+		onFinish={handleFinalizeCrop}
+		onCancel={() => (cropImage = null)}
+	/>
 {/if}
 
 <style>
@@ -363,10 +319,6 @@
 		border: 1px dashed var(--border-strong);
 	}
 	.empty-state-global p { font-size: 1.6rem; color: var(--text-grey); margin-bottom: 2rem; }
-
-	.upload-zone-wrapper {
-		margin-bottom: 1.6rem;
-	}
 
 	.mobile-only { display: none; }
 	.desktop-only { display: flex; }

@@ -15,8 +15,8 @@ export class ServiceRepository {
 	static async saveService(service: Insert<'services'> | Update<'services'>) {
 		const isUpdate = 'id' in service && service.id;
 		const { data, error } = isUpdate
-			? await supabase.from('services').update(service).eq('id', service.id).select().single()
-			: await supabase.from('services').insert([service]).select().single();
+			? await supabase.from('services').update(service as any).eq('id', service.id).select().single()
+			: await supabase.from('services').insert([service as any]).select().single();
 		if (error) throw error;
 		return data;
 	}
