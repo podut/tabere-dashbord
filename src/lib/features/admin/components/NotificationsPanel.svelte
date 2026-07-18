@@ -84,12 +84,10 @@
 				body: nouaNotif.body,
 				target_type: nouaNotif.target_type,
 				target_event_id: nouaNotif.target_type === 'event' ? nouaNotif.target_event_id : null,
-				is_recurring: nouaNotif.is_recurring,
-				recurring_hour: nouaNotif.is_recurring ? nouaNotif.recurring_hour : null,
 				scheduled_at: new Date(nouaNotif.scheduled_at).toISOString(),
 				status: 'programat',
-				open_count: 0,
-				is_read: false
+				channel: 'htcmx_general',
+				open_count: 0
 			};
 			await NotificationRepository.createNotification(payload);
 			showNotifModal = false;
@@ -191,7 +189,7 @@
 							{#if ds === 'active'}
 								<span class="badge-livrare badge-livrare--activa">Activă</span>
 							{:else if ds === 'expired'}
-								{#if n.status === 'trimis' || n.status === 'sent'}
+								{#if n.status === 'trimis'}
 									<span class="badge-livrare badge-livrare--finalizata">Finalizată</span>
 								{:else}
 									<span class="badge-livrare badge-livrare--expirata">Expirată</span>

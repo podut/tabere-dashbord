@@ -38,7 +38,7 @@
 	async function incarcaTipuri() {
 		try {
 			const { data } = await supabase.rpc('get_event_types');
-			if (data && data.length > 0) {
+			if (Array.isArray(data) && data.length > 0) {
 				const noi = (data as string[]).filter((t: string) => !tipuriExistente.includes(t));
 				tipuriExistente = [...new Set([...tipuriExistente, ...noi])];
 			}
@@ -241,7 +241,7 @@
 			if (bookingDeRepartizat.user_id) {
 				const evTitle = evenimente.find(e => e.id === bookingDeRepartizat!.event_id)?.title ?? 'eveniment';
 				await supabase.from('notifications').insert({
-					user_id: bookingDeRepartizat.user_id,
+					target_user_id: bookingDeRepartizat.user_id,
 					title: 'Ai fost repartizat!',
 					body: `Ești repartizat pe poziția "${pozitiaSelectata}" la ${evTitle}. Ne vedem pe teren!`,
 					target_event_id: bookingDeRepartizat.event_id,

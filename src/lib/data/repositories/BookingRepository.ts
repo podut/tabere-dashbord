@@ -5,10 +5,14 @@ type Callback = (payload: { eventType: 'INSERT' | 'UPDATE' | 'DELETE'; new: Book
 
 export class BookingRepository {
 	static async getBookings() {
+		// Supabase (supabase/config.toml max_rows=1000) trunchiaza silentios peste 1000
+		// randuri fara .range() explicit. bookings creste constant — cerem un plafon
+		// generos ca sa nu pierdem randuri fara eroare vizibila.
 		const { data, error } = await supabase
 			.from('bookings')
 			.select('*')
-			.order('created_at', { ascending: false });
+			.order('created_at', { ascending: false })
+			.range(0, 4999);
 
 		if (error) throw error;
 		return data || [];

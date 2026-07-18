@@ -10,15 +10,17 @@ import { PartnerRepository } from '$lib/data/repositories/PartnerRepository';
 import { GalleryRepository } from '$lib/data/repositories/GalleryRepository';
 import { ContentRepository } from '$lib/data/repositories/ContentRepository';
 import { UserRepository } from '$lib/data/repositories/UserRepository';
+import { NotificationRepository } from '$lib/data/repositories/NotificationRepository';
 import type { 
 	EventRow, Booking, Product, OrderRow, Service, Equipment, 
-	Partner, Gallery, WebsiteContent 
+	Partner, Gallery, WebsiteContent, NotificationRow
 } from '$lib/types';
 
 class AdminState {
 	// Auth
 	user = $state<User | null>(null);
 	authenticated = $state(false);
+	accessDenied = $state(false);
 
 	// Data
 	evenimente = $state<EventRow[]>([]);
@@ -31,6 +33,8 @@ class AdminState {
 	parteneri = $state<Partner[]>([]);
 	continutSite = $state<WebsiteContent[]>([]);
 	echipament = $state<Equipment[]>([]);
+	notificari = $state<NotificationRow[]>([]);
+	notifUnread = $state(0);
 	
 	incarcare = $state(false);
 	sectiuneActiva = $state('evenimente');
@@ -51,15 +55,12 @@ class AdminState {
 	async init() {
 		const { data: { session } } = await supabase.auth.getSession();
 		if (session) {
-			this.user = session.user;
-			this.authenticated = true;
-			await this.refreshAll();
+			await this.verifyAdminAndLoad(session.user);
 		}
 
 		supabase.auth.onAuthStateChange((_event, session) => {
 			if (session) {
-				this.user = session.user;
-				this.authenticated = true;
+				this.verifyAdminAndLoad(session.user);
 			} else {
 				this.user = null;
 				this.authenticated = false;
@@ -67,12 +68,47 @@ class AdminState {
 		});
 	}
 
+	/**
+	 * O sesiune Supabase valida nu inseamna admin — orice client din Android
+	 * poate avea cont. Verificam explicit rolul inainte sa aratam panoul si
+	 * inainte sa incarcam vreo date (bookings/orders/profiles contin PII).
+	 */
+	async verifyAdminAndLoad(user: User) {
+		const { data: isAdmin, error } = await supabase.rpc('is_admin');
+		if (error || !isAdmin) {
+			this.accessDenied = true;
+			this.user = null;
+			this.authenticated = false;
+			await supabase.auth.signOut();
+			return;
+		}
+
+		this.accessDenied = false;
+		this.user = user;
+		this.authenticated = true;
+		await this.refreshAll();
+		this.startRealtimeSync();
+	}
+
+	private startRealtimeSync() {
+		supabase
+			.channel('public:notifications')
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'notifications' },
+				() => {
+					this.notifUnread++; // Simple live badge update
+				}
+			)
+			.subscribe();
+	}
+
 	async refreshAll() {
 		this.incarcare = true;
 		try {
 			await EventRepository.autoFinalizeEvents();
 			
-			const [ev, prod, rez, serv, gal, cmd, eq, pt, site, users] = await Promise.all([
+			const [ev, prod, rez, serv, gal, cmd, eq, pt, site, users, notifData] = await Promise.all([
 				EventRepository.getEvents(),
 				ProductRepository.getProducts(),
 				BookingRepository.getBookings(),
@@ -82,7 +118,8 @@ class AdminState {
 				EquipmentRepository.getEquipment(),
 				PartnerRepository.getPartners(),
 				ContentRepository.getContent(),
-				UserRepository.getUsers(1, 1) // Doar pentru count
+				UserRepository.getUsers(1, 1),
+				NotificationRepository.getNotifications(1, 100, 'all')
 			]);
 
 			this.evenimente = ev;
@@ -95,6 +132,8 @@ class AdminState {
 			this.parteneri = pt;
 			this.continutSite = site;
 			this.utilTotal = users.total;
+			this.notificari = notifData.data;
+			this.notifUnread = notifData.data.filter((n: any) => !n.is_read).length;
 
 		} catch (err) {
 			console.error('Error refreshing admin data:', err);

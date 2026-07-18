@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ProductRepository } from '$lib/data/repositories/ProductRepository';
 	import { showToast, confirmDialog } from '$lib/admin/notify.svelte';
+	import { supabase, STORAGE_BUCKET } from '$lib/supabase';
 	import type { Product } from '$lib/types';
 	import ProductMobileCard from './view/ProductMobileCard.svelte';
 	import ProductModal from './ProductModal.svelte';
@@ -169,7 +170,7 @@
 						<td class="col-img"><img src={p.image_url} alt="" class="prod-img-thumb" /></td>
 						<td><strong class="prod-name">{p.name}</strong></td>
 						<td class="col-price">{p.price} {p.currency || 'lei'}</td>
-						<td class="col-stock"><span class="stock-badge" class:low-stock={p.stock <= 5}>{p.stock}</span></td>
+						<td class="col-stock"><span class="stock-badge" class:low-stock={(p.stock ?? 0) <= 5}>{p.stock}</span></td>
 						<td>
 							<div class="actiuni-celula">
 								<button class="btn-icon btn-galerie" onclick={() => { produsCurent = { ...p, images: p.images || [] }; showProdGalModal = true; }} title="Galerie">

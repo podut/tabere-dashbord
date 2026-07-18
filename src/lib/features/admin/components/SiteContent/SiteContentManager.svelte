@@ -147,16 +147,14 @@
 			</label>
 		</div>
 		<div class="onboarding-images">
-			{#if onboardingSection?.images?.length > 0}
-				{#each onboardingSection.images as imgUrl (imgUrl)}
-					<div class="onboarding-img-card">
-						<img src={imgUrl} alt="" class="onboarding-img" />
-						<button class="btn-remove-img" onclick={() => removeOnboardingImage(imgUrl)} title="Elimină">✕</button>
-					</div>
-				{/each}
+			{#each onboardingSection?.images ?? [] as imgUrl (imgUrl)}
+				<div class="onboarding-img-card">
+					<img src={imgUrl} alt="" class="onboarding-img" />
+					<button class="btn-remove-img" onclick={() => removeOnboardingImage(imgUrl)} title="Elimină">✕</button>
+				</div>
 			{:else}
 				<div class="onboarding-empty">Nicio imagine adăugată. Aplicația va folosi imaginile de rezervă.</div>
-			{/if}
+			{/each}
 		</div>
 	</div>
 

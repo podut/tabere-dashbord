@@ -23,17 +23,27 @@
 	let email = $state('');
 	let password = $state('');
 	let eroareLogin = $state('');
-	let notificationsPanelRef = $state<any>(null);
 	let mobileMenuOpen = $state(false);
+
+	function setSectiune(s: string) {
+		adminState.sectiuneActiva = s;
+		localStorage.setItem('admin_sectiune', s);
+	}
 
 	async function handleLogin(e: SubmitEvent) {
 		e.preventDefault();
 		eroareLogin = '';
 		adminState.incarcare = true;
 		try {
-			const { error } = await supabase.auth.signInWithPassword({ email, password });
-			if (error) eroareLogin = error.message;
-			// Statul se va actualiza via onAuthStateChange în adminState.init()
+			const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+			if (error) {
+				eroareLogin = error.message;
+			} else if (data.user) {
+				await adminState.verifyAdminAndLoad(data.user);
+				if (adminState.accessDenied) {
+					eroareLogin = 'Acest cont nu are drepturi de administrator.';
+				}
+			}
 		} catch (err) {
 			eroareLogin = 'Eroare la autentificare.';
 		} finally {
@@ -46,6 +56,8 @@
 	}
 
 	onMount(() => {
+		const saved = localStorage.getItem('admin_sectiune');
+		if (saved) adminState.sectiuneActiva = saved;
 		adminState.init();
 	});
 </script>
@@ -86,19 +98,19 @@
 				evenimenteDeFinalizat={adminState.evenimenteDeFinalizat} 
 			/>
 		</div>
-
+	
 		<div class="layout-continut">
 			<aside class="sidebar">
 				<nav>
-					<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => adminState.sectiuneActiva = 'evenimente'}><span class="nav-icon">📅</span><span class="nav-label">Evenimente</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'echipament'} onclick={() => adminState.sectiuneActiva = 'echipament'}><span class="nav-icon">🔫</span><span class="nav-label">Echipament</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'produse'} onclick={() => adminState.sectiuneActiva = 'produse'}><span class="nav-icon">🛒</span><span class="nav-label">Produse</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => adminState.sectiuneActiva = 'comenzi'}><span class="nav-icon">📦</span><span class="nav-label">Comenzi</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'utilizatori'} onclick={() => adminState.sectiuneActiva = 'utilizatori'}><span class="nav-icon">👥</span><span class="nav-label">Utilizatori</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'servicii'} onclick={() => adminState.sectiuneActiva = 'servicii'}><span class="nav-icon">🛠️</span><span class="nav-label">Servicii</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'galerie'} onclick={() => adminState.sectiuneActiva = 'galerie'}><span class="nav-icon">🖼️</span><span class="nav-label">Galerie</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => adminState.sectiuneActiva = 'notificari'}><span class="nav-icon">📢</span><span class="nav-label">Notificări</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => adminState.sectiuneActiva = 'site'}><span class="nav-icon">🌐</span><span class="nav-label">Conținut Site</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => setSectiune('evenimente')}><span class="nav-icon">📅</span><span class="nav-label">Evenimente</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'echipament'} onclick={() => setSectiune('echipament')}><span class="nav-icon">🔫</span><span class="nav-label">Echipament</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'produse'} onclick={() => setSectiune('produse')}><span class="nav-icon">🛒</span><span class="nav-label">Produse</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => setSectiune('comenzi')}><span class="nav-icon">📦</span><span class="nav-label">Comenzi</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'utilizatori'} onclick={() => setSectiune('utilizatori')}><span class="nav-icon">👥</span><span class="nav-label">Utilizatori</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'servicii'} onclick={() => setSectiune('servicii')}><span class="nav-icon">🛠️</span><span class="nav-label">Servicii</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'galerie'} onclick={() => setSectiune('galerie')}><span class="nav-icon">🖼️</span><span class="nav-label">Galerie</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => setSectiune('notificari')}><span class="nav-icon">📢</span><span class="nav-label">Notificări</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => setSectiune('site')}><span class="nav-icon">🌐</span><span class="nav-label">Conținut Site</span></button>
 				</nav>
 			</aside>
 
@@ -136,10 +148,10 @@
 					{:else if adminState.sectiuneActiva === 'galerie'}
 						<GalleryManager bind:galerie={adminState.galerie} refreshGallery={() => adminState.refreshAll()} />
 					{:else if adminState.sectiuneActiva === 'notificari'}
-						<NotificationsPanel bind:this={notificationsPanelRef} evenimente={adminState.evenimente} />
+						<NotificationsPanel evenimente={adminState.evenimente} />
 					{:else if adminState.sectiuneActiva === 'site'}
 						<SiteContentManager bind:continutSite={adminState.continutSite} refreshSite={() => adminState.refreshAll()} />
-{/if}
+					{/if}
 				{/if}
 			</main>
 		</div>
@@ -163,8 +175,8 @@
 							{ id: 'galerie', label: '🖼️ Galerie' },
 							{ id: 'notificari', label: '📢 Notificări' },
 							{ id: 'site', label: '🌐 Conținut Site' },
-	] as r}
-							<button class:activ={adminState.sectiuneActiva === r.id} onclick={() => { adminState.sectiuneActiva = r.id; mobileMenuOpen = false; }}>{r.label}</button>
+						] as r}
+							<button class:activ={adminState.sectiuneActiva === r.id} onclick={() => { setSectiune(r.id); mobileMenuOpen = false; }}>{r.label}</button>
 						{/each}
 					</nav>
 				</div>
@@ -173,13 +185,13 @@
 
 		<!-- Mobile Bottom Nav -->
 		<nav class="mobile-nav">
-			<button class:activ={adminState.sectiuneActiva === 'dashboard'} onclick={() => adminState.sectiuneActiva = 'dashboard'}>
+			<button class:activ={adminState.sectiuneActiva === 'dashboard'} onclick={() => setSectiune('dashboard')}>
 				<span>📊</span><small>Stats</small>
 			</button>
-			<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => adminState.sectiuneActiva = 'evenimente'}>
+			<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => setSectiune('evenimente')}>
 				<span>📅</span><small>Evenim.</small>
 			</button>
-			<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => adminState.sectiuneActiva = 'comenzi'}>
+			<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => setSectiune('comenzi')}>
 				<span>📦</span><small>Comenzi</small>
 			</button>
 			<button onclick={() => mobileMenuOpen = true}>
