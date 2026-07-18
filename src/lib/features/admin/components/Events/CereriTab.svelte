@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { Booking, EventRow } from '$lib/types';
 
-	let { cereri, evenimente, onRepartizare, onConverteste, onDelete }: {
+	let { cereri, evenimente, onRepartizare, onConverteste, onRespinge, onDelete }: {
 		cereri: Booking[];
 		evenimente: EventRow[];
 		onRepartizare: (booking: Booking) => void;
 		onConverteste: (booking: Booking) => void;
+		onRespinge: (id: string) => void;
 		onDelete: (id: string) => void;
 	} = $props();
 </script>
@@ -65,6 +66,9 @@
 												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
 											</button>
 										{/if}
+										<button class="btn-icon btn-respinge" onclick={() => onRespinge(r.id)} title="Respinge (anulează)">
+											<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+										</button>
 										<button class="btn-icon btn-sterge" onclick={() => onDelete(r.id)} title="Șterge">
 											<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
 										</button>
@@ -86,6 +90,8 @@
 	.btn-repartizare:hover { background: #e7f5ff; border-color: #1971c2; }
 	.btn-converteste { color: var(--primary); border-color: var(--border); }
 	.btn-converteste:hover { background: var(--primary-tint); border-color: var(--primary); }
+	.btn-respinge { color: #e8590c; border-color: #ffd8a8; }
+	.btn-respinge:hover { background: #fff4e6; border-color: #e8590c; }
 		.td-gol { text-align: center; padding: 4rem; color: #999; }
 		.cod-privat-badge { margin-top: 4px; font-size: 1.1rem; color: #6741d9; }
 		.cod-privat-badge code { background: #f3f0ff; border-radius: 4px; padding: 1px 5px; letter-spacing: 0.05em; font-weight: 600; }

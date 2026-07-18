@@ -190,6 +190,23 @@
 		}
 	}
 
+	async function respingeBooking(id: string) {
+		if (!(await confirmDialog({
+			title: 'Respingi cererea?',
+			message: 'Cererea va fi marcată ca anulată. Rămâne în istoricul clientului, nu se șterge.',
+			confirmLabel: 'Respinge',
+			danger: true
+		}))) return;
+
+		try {
+			await BookingRepository.updateBooking(id, { status: 'anulat' });
+			await refreshBookings();
+			showToast('success', 'Cerere respinsă.');
+		} catch (err: any) {
+			showToast('error', err.message);
+		}
+	}
+
 	async function mutaParticipant(bookingId: string, newPosition: string) {
 		try {
 			await BookingRepository.assignPosition(bookingId, newPosition);
@@ -262,8 +279,11 @@
 	}
 
 	function convertesteInEveniment(booking: Booking) {
-		const srv = servicii.find(s => s.title === booking.activity_title);
-		
+		// Preferam legatura stabila pe service_id; cadem pe match dupa titlu doar
+		// pentru cererile vechi (dinainte de coloana service_id) care nu-l au.
+		const srv = (booking.service_id && servicii.find(s => s.id === booking.service_id))
+			|| servicii.find(s => s.title === booking.activity_title);
+
 		const isPrivate = booking.is_private && !!booking.private_code;
 		evenimentCurent = {
 			title: `${booking.activity_title} — ${booking.nume_client}`,
@@ -376,6 +396,7 @@
 			{evenimente}
 			onRepartizare={deschideRepartizare}
 			onConverteste={convertesteInEveniment}
+			onRespinge={respingeBooking}
 			onDelete={stergeBooking}
 		/>
 	{:else if tabActiv === 'confirmati'}

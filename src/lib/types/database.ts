@@ -53,6 +53,7 @@ export type Database = {
           preferred_time: string | null
           private_code: string
           selected_position: string | null
+          service_id: string | null
           status: Database["public"]["Enums"]["booking_status"]
           telefon: string
           user_id: string | null
@@ -76,6 +77,7 @@ export type Database = {
           preferred_time?: string | null
           private_code?: string
           selected_position?: string | null
+          service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           telefon: string
           user_id?: string | null
@@ -99,6 +101,7 @@ export type Database = {
           preferred_time?: string | null
           private_code?: string
           selected_position?: string | null
+          service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           telefon?: string
           user_id?: string | null
@@ -110,6 +113,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
