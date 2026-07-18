@@ -53,11 +53,10 @@ class AdminState {
 	);
 
 	async init() {
-		const { data: { session } } = await supabase.auth.getSession();
-		if (session) {
-			await this.verifyAdminAndLoad(session.user);
-		}
-
+		// onAuthStateChange emite si starea initiala a sesiunii la inregistrare
+		// (INITIAL_SESSION), deci nu mai verificam separat cu getSession() —
+		// asta dubla apelul lui verifyAdminAndLoad() la incarcarea paginii si
+		// facea startRealtimeSync() sa se aboneze de doua ori pe acelasi canal.
 		supabase.auth.onAuthStateChange((_event, session) => {
 			if (session) {
 				this.verifyAdminAndLoad(session.user);
@@ -90,7 +89,14 @@ class AdminState {
 		this.startRealtimeSync();
 	}
 
+	private realtimeStarted = false;
 	private startRealtimeSync() {
+		// verifyAdminAndLoad ruleaza la fiecare eveniment de auth cu sesiune activa
+		// (SIGNED_IN, TOKEN_REFRESHED, ...), nu doar o data — fara aceasta garda,
+		// a doua oara .on() arunca "cannot add postgres_changes callbacks after subscribe()".
+		if (this.realtimeStarted) return;
+		this.realtimeStarted = true;
+
 		supabase
 			.channel('public:notifications')
 			.on(
