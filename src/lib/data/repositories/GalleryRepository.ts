@@ -1,5 +1,5 @@
 import { supabase } from '$lib/supabase';
-import type { Gallery, Insert, Update } from '$lib/types';
+import type { Insert, Update } from '$lib/types';
 
 export class GalleryRepository {
 	static async getGallery() {

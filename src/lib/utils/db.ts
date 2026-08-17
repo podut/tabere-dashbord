@@ -3,5 +3,5 @@
  * pentru a preveni căutări neașteptate.
  */
 export function sanitizeSearch(query: string): string {
-	return query.replace(/[%_]/g, '\\$&');
+	return query.replace(/[%_]/g, String.raw`\$&`);
 }

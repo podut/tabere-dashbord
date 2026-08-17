@@ -1,5 +1,5 @@
 import { supabase } from '$lib/supabase';
-import type { EventRow, Insert, Update } from '$lib/types';
+import type { Insert, Update } from '$lib/types';
 
 export class EventRepository {
 	static async getEvents() {
@@ -54,7 +54,7 @@ export class EventRepository {
 			.filter(e => {
 				const datePart = e.date?.substring(0, 10);
 				if (!datePart) return false;
-				const timePart = e.start_time?.match(/^\d{2}:\d{2}$/) ? e.start_time : '23:59';
+				const timePart = e.start_time && /^\d{2}:\d{2}$/.exec(e.start_time) ? e.start_time : '23:59';
 				return new Date(`${datePart}T${timePart}:00`) < now;
 			})
 			.map(e => e.id);

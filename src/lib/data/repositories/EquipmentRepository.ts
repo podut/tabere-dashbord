@@ -1,5 +1,5 @@
 import { supabase } from '$lib/supabase';
-import type { Equipment, Insert, Update } from '$lib/types';
+import type { Insert, Update } from '$lib/types';
 
 export class EquipmentRepository {
 	static async getEquipment() {

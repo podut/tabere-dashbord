@@ -1,5 +1,5 @@
 import { supabase } from '$lib/supabase';
-import type { WebsiteContent, Update } from '$lib/types';
+import type { WebsiteContent } from '$lib/types';
 
 export class ContentRepository {
 	static async getContent() {

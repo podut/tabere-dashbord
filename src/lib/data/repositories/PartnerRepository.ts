@@ -1,5 +1,5 @@
 import { supabase } from '$lib/supabase';
-import type { Partner, Insert, Update } from '$lib/types';
+import type { Insert, Update } from '$lib/types';
 
 export class PartnerRepository {
 	static async getPartners() {

@@ -1,5 +1,5 @@
 import { supabase } from '$lib/supabase';
-import type { OrderRow, Update } from '$lib/types';
+import type { OrderRow } from '$lib/types';
 
 export class OrderRepository {
 	static async getOrders() {
