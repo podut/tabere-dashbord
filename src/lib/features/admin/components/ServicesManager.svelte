@@ -58,6 +58,7 @@
 	let cropImage = $state<string | null>(null);
 	let incarcareFoto = $state(false);
 	let incarcareGalerie = $state(false);
+	let incarcareLogoPartener = $state(false);
 
 	function deschideServiciu(s: any = null) {
 		editMode = !!s;
@@ -81,6 +82,32 @@
 			const reader = new FileReader();
 			reader.onload = () => { cropImage = reader.result as string; };
 			reader.readAsDataURL(target.files[0]);
+			target.value = '';
+		}
+	}
+
+	// Logo-ul de partener nu avea NICIUN camp de upload in UI — odata creat un
+	// partener, `image_url` ramanea mereu gol/needitabil din admin (singura
+	// cale sa-l setezi era direct in DB). Gasit auditand campurile pe care
+	// IOSClient le citeste efectiv (Home -> sectiunea PARTENERI arata
+	// image_url) fata de ce poate seta admin-ul. Upload direct, fara crop —
+	// logo-urile nu au nevoie de aspect-ratio impus, spre deosebire de
+	// imaginea principala a unui serviciu.
+	async function onFotoPartenerSelectata(e: Event) {
+		const target = e.target as HTMLInputElement;
+		if (!target.files || target.files.length === 0) return;
+		incarcareLogoPartener = true;
+		try {
+			const file = target.files[0];
+			const fileName = `partners/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+			const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(fileName, file);
+			if (uploadError) throw uploadError;
+			const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+			partenerCurent.image_url = data.publicUrl;
+		} catch (err: any) {
+			showToast('error', err.message);
+		} finally {
+			incarcareLogoPartener = false;
 			target.value = '';
 		}
 	}
@@ -301,6 +328,8 @@
 		{editMode}
 		onClose={() => (showPartnerModal = false)}
 		onSave={salveazaPartener}
+		onFotoSelectata={onFotoPartenerSelectata}
+		incarcareLogo={incarcareLogoPartener}
 	/>
 {/if}
 

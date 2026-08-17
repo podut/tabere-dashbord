@@ -25,6 +25,7 @@
 		price: 0,
 		category: 'echipament',
 		stock: 10,
+		in_stock: true,
 		description: '',
 		full_desc: '',
 		sizes: [],
@@ -32,6 +33,23 @@
 		image_url: '',
 		images: []
 	});
+
+	// Categorii existente + fallback, acelasi tipar ca la Servicii (categoriiExistente).
+	let categoriiProduse = $state<string[]>(['echipament', 'imbracaminte', 'accesorii']);
+	async function incarcaCategoriiProduse() {
+		try {
+			const { data } = await supabase
+				.from('products')
+				.select('category')
+				.not('category', 'is', null);
+			if (data) {
+				const dinDb = [...new Set((data as { category: string }[]).map(r => r.category).filter(Boolean))];
+				const noi = dinDb.filter(c => !categoriiProduse.includes(c));
+				categoriiProduse = [...new Set([...categoriiProduse, ...noi])];
+			}
+		} catch (_) { /* pastreaza defaults */ }
+	}
+	$effect(() => { incarcaCategoriiProduse(); });
 
 	// --- CROP STATE ---
 	let cropImage = $state<string | null>(null);
@@ -41,7 +59,7 @@
 		editMode = !!p;
 		produsCurent = p
 			? { ...p, images: p.images || [] }
-			: { name: '', price: 0, category: 'echipament', stock: 10, description: '', full_desc: '', image_url: '', images: [] };
+			: { name: '', price: 0, category: 'echipament', stock: 10, in_stock: true, description: '', full_desc: '', sizes: [], colors: [], image_url: '', images: [] };
 		showProdModal = true;
 	}
 
@@ -54,11 +72,20 @@
 				name: produsCurent.name,
 				price: produsCurent.price,
 				stock: produsCurent.stock,
+				in_stock: produsCurent.in_stock,
 				category: produsCurent.category,
 				description: produsCurent.description,
 				full_desc: produsCurent.full_desc,
 				image_url: produsCurent.image_url,
-				images: produsCurent.images || []
+				images: produsCurent.images || [],
+				// Campul "Marimi" din formular scria deja in produsCurent.sizes (bind
+				// pe obiectul $bindable), dar payload-ul de mai jos nu le includea
+				// niciodata — orice modificare la marimi/culori se pierdea silentios
+				// la salvare, fara nicio eroare vizibila. Gasit auditand campurile
+				// citite de IOSClient (VariantPickerModal) fata de ce salva efectiv
+				// formularul de admin.
+				sizes: produsCurent.sizes || [],
+				colors: produsCurent.colors || []
 			};
 
 			await ProductRepository.saveProduct(payload as any);
@@ -198,6 +225,7 @@
 		bind:produs={produsCurent}
 		{editMode}
 		{saving}
+		{categoriiProduse}
 		onClose={() => (showProdModal = false)}
 		onSave={salveazaProdus}
 		{onFileSelected}

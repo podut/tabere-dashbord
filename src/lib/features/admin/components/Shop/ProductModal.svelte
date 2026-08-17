@@ -1,8 +1,9 @@
 <script lang="ts">
-	let { produs = $bindable(), editMode, saving, onClose, onSave, onFileSelected }: {
+	let { produs = $bindable(), editMode, saving, categoriiProduse = [], onClose, onSave, onFileSelected }: {
 		produs: any;
 		editMode: boolean;
 		saving: boolean;
+		categoriiProduse: string[];
 		onClose: () => void;
 		onSave: (e: SubmitEvent) => void;
 		onFileSelected: (e: Event, context: string) => void;
@@ -35,13 +36,46 @@
 			<div class="camp"><label>Descriere Detaliată</label><textarea bind:value={produs.full_desc} style="width:100%; height:12rem; border-radius:9px; border:1px solid var(--border); padding:1rem; resize:vertical; font-family:inherit;"></textarea></div>
 			
 			<div class="form-row-2col">
-				<div class="camp"><label>Preț (RON)</label><input type="number" bind:value={produs.price} required step="0.01" /></div>
-				<div class="camp"><label>Stoc Disponibil</label><input type="number" bind:value={produs.stock} required /></div>
+				<div class="camp">
+					<label>Categorie</label>
+					<input
+						list="categorii-produse-list"
+						bind:value={produs.category}
+						placeholder="ex: echipament, imbracaminte..."
+						autocomplete="off"
+					/>
+					<datalist id="categorii-produse-list">
+						{#each categoriiProduse as cat}
+							<option value={cat} />
+						{/each}
+					</datalist>
+				</div>
+				<div class="camp camp-toggle">
+					<label>În stoc</label>
+					<label class="toggle">
+						<input type="checkbox" bind:checked={produs.in_stock} />
+						<span class="slider"></span>
+					</label>
+				</div>
 			</div>
 
-			<div class="camp">
-				<label>Mărimi (separate prin virgulă)</label>
-				<input placeholder="ex: S, M, L, XL" value={produs.sizes?.join(', ')} onchange={(e) => produs.sizes = e.currentTarget.value.split(',').map(s => s.trim()).filter(s => s)} />
+			<div class="form-row-2col">
+				<div class="camp"><label>Preț (RON)</label><input type="number" bind:value={produs.price} required step="0.01" /></div>
+				<div class="camp">
+					<label>Stoc Disponibil (-1 = nelimitat)</label>
+					<input type="number" bind:value={produs.stock} required />
+				</div>
+			</div>
+
+			<div class="form-row-2col">
+				<div class="camp">
+					<label>Mărimi (separate prin virgulă)</label>
+					<input placeholder="ex: S, M, L, XL" value={produs.sizes?.join(', ')} onchange={(e) => produs.sizes = e.currentTarget.value.split(',').map(s => s.trim()).filter(s => s)} />
+				</div>
+				<div class="camp">
+					<label>Culori (separate prin virgulă)</label>
+					<input placeholder="ex: Negru, OD Green, Tan" value={produs.colors?.join(', ')} onchange={(e) => produs.colors = e.currentTarget.value.split(',').map(s => s.trim()).filter(s => s)} />
+				</div>
 			</div>
 
 			<div style="display:flex; gap:1.2rem; margin-top:2.4rem;">
@@ -51,3 +85,15 @@
 		</form>
 	</div>
 </div>
+
+<style>
+	/* Copiate din ServiceModal.svelte — stilurile de toggle sunt scoped per
+	   componenta in Svelte, nu exista global in admin.css. */
+	.camp-toggle { display: flex; flex-direction: column; gap: 0.8rem; align-items: flex-start; }
+	.toggle { position: relative; display: inline-block; width: 5.2rem; height: 2.8rem; }
+	.toggle input { opacity: 0; width: 0; height: 0; }
+	.slider { position: absolute; inset: 0; background: var(--border-strong); border-radius: 3rem; cursor: pointer; transition: 0.3s; }
+	.slider::before { content: ''; position: absolute; height: 2rem; width: 2rem; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+	input:checked + .slider { background: var(--primary); }
+	input:checked + .slider::before { transform: translateX(2.4rem); }
+</style>
