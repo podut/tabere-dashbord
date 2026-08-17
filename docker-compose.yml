@@ -1,0 +1,35 @@
+services:
+  admin:
+    build:
+      context: .
+      args:
+        PUBLIC_SUPABASE_URL: ${PUBLIC_SUPABASE_URL}
+        PUBLIC_SUPABASE_ANON_KEY: ${PUBLIC_SUPABASE_ANON_KEY}
+        PUBLIC_STORAGE_BUCKET: ${PUBLIC_STORAGE_BUCKET}
+    container_name: htcmx-web-admin
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+
+  # Aceeasi imagine, dar construita impotriva Supabase-ului LOCAL (stack-ul
+  # pornit cu `npx supabase start` din radacina proiectului), nu productia.
+  # Valorile vin din .env.local (nu hardcodate aici), la fel cum `admin`
+  # de mai sus le citeste din .env — build cu:
+  #   docker compose --env-file .env.local build admin-local
+  #   docker compose --env-file .env.local up -d admin-local
+  # host.docker.internal e necesar fiindca 127.0.0.1 in interiorul
+  # containerului ar insemna containerul insusi, nu masina gazda unde
+  # asculta Supabase local pe :54321.
+  admin-local:
+    build:
+      context: .
+      args:
+        PUBLIC_SUPABASE_URL: ${PUBLIC_SUPABASE_URL}
+        PUBLIC_SUPABASE_ANON_KEY: ${PUBLIC_SUPABASE_ANON_KEY}
+        PUBLIC_STORAGE_BUCKET: ${PUBLIC_STORAGE_BUCKET}
+    container_name: htcmx-web-admin-local
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "3101:3000"

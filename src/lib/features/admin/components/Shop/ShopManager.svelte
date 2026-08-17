@@ -170,7 +170,7 @@
 						<td class="col-img"><img src={p.image_url} alt="" class="prod-img-thumb" /></td>
 						<td><strong class="prod-name">{p.name}</strong></td>
 						<td class="col-price">{p.price} {p.currency || 'lei'}</td>
-						<td class="col-stock"><span class="stock-badge" class:low-stock={(p.stock ?? 0) <= 5}>{p.stock}</span></td>
+						<td class="col-stock"><span class="stock-badge" class:low-stock={p.stock !== -1 && (p.stock ?? 0) <= 5}>{p.stock === -1 ? 'Nelimitat' : p.stock}</span></td>
 						<td>
 							<div class="actiuni-celula">
 								<button class="btn-icon btn-galerie" onclick={() => { produsCurent = { ...p, images: p.images || [] }; showProdGalModal = true; }} title="Galerie">
