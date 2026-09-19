@@ -36,7 +36,7 @@ pipeline {
                 )]) {
                     sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                     sh """
-                        docker buildx build --platform linux/arm64 \\
+                        docker buildx build --builder arm64builder --platform linux/arm64 \\
                             --build-arg PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL} \\
                             --build-arg PUBLIC_SUPABASE_ANON_KEY=${PUBLIC_SUPABASE_KEY} \\
                             --build-arg PUBLIC_STORAGE_BUCKET=${PUBLIC_STORAGE_BUCKET} \\
