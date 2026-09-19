@@ -19,6 +19,8 @@
 	import NotificationsPanel from '$lib/features/admin/components/NotificationsPanel.svelte';
 	import ServicesManager from '$lib/features/admin/components/ServicesManager.svelte';
 	import GalleryManager from '$lib/features/admin/components/GalleryManager.svelte';
+	import BlogManager from '$lib/features/admin/components/Blog/BlogManager.svelte';
+	import EmailManager from '$lib/features/admin/components/Email/EmailManager.svelte';
 
 	let email = $state('');
 	let password = $state('');
@@ -109,49 +111,51 @@
 					<button class:activ={adminState.sectiuneActiva === 'utilizatori'} onclick={() => setSectiune('utilizatori')}><span class="nav-icon">👥</span><span class="nav-label">Utilizatori</span></button>
 					<button class:activ={adminState.sectiuneActiva === 'servicii'} onclick={() => setSectiune('servicii')}><span class="nav-icon">🛠️</span><span class="nav-label">Servicii</span></button>
 					<button class:activ={adminState.sectiuneActiva === 'galerie'} onclick={() => setSectiune('galerie')}><span class="nav-icon">🖼️</span><span class="nav-label">Galerie</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'blog'} onclick={() => setSectiune('blog')}><span class="nav-icon">📰</span><span class="nav-label">Blog & Articole</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'email'} onclick={() => setSectiune('email')}><span class="nav-icon">📬</span><span class="nav-label">Email & Newsletter</span></button>
 					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => setSectiune('notificari')}><span class="nav-icon">📢</span><span class="nav-label">Notificări</span></button>
 					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => setSectiune('site')}><span class="nav-icon">🌐</span><span class="nav-label">Conținut Site</span></button>
 				</nav>
 			</aside>
 
 			<main class="zona-lucru">
-				{#if adminState.incarcare && adminState.evenimente.length === 0}
-					<div class="incarcare">Se încarcă datele...</div>
-				{:else}
-					{#if adminState.sectiuneActiva === 'dashboard'}
-						<div class="mobile-only-stats">
-							<StatsGrid 
-								venituri={adminState.venituri} 
-								comenziNoi={adminState.comenziNoi} 
-								utilTotal={adminState.utilTotal} 
-								evenimenteDeFinalizat={adminState.evenimenteDeFinalizat} 
-							/>
-						</div>
-					{:else if adminState.sectiuneActiva === 'evenimente'}
-						<EventsManager 
-							bind:evenimente={adminState.evenimente} 
-							bind:rezervari={adminState.rezervari} 
-							servicii={adminState.servicii} 
-							refreshEvents={() => adminState.refreshEvents()} 
-							refreshBookings={() => adminState.refreshBookings()} 
+				{#if adminState.sectiuneActiva === 'dashboard'}
+					<div class="mobile-only-stats">
+						<StatsGrid 
+							venituri={adminState.venituri} 
+							comenziNoi={adminState.comenziNoi} 
+							utilTotal={adminState.utilTotal} 
+							evenimenteDeFinalizat={adminState.evenimenteDeFinalizat} 
 						/>
-					{:else if adminState.sectiuneActiva === 'echipament'}
-						<EquipmentManager bind:echipament={adminState.echipament} refreshEquipment={() => adminState.refreshAll()} />
-					{:else if adminState.sectiuneActiva === 'produse'}
-						<ShopManager bind:produse={adminState.produse} refreshProducts={() => adminState.refreshAll()} />
-					{:else if adminState.sectiuneActiva === 'comenzi'}
-						<OrdersManager bind:comenzi={adminState.comenzi} refreshOrders={() => adminState.refreshAll()} />
-					{:else if adminState.sectiuneActiva === 'utilizatori'}
-						<UsersManager bind:utilTotal={adminState.utilTotal} />
-					{:else if adminState.sectiuneActiva === 'servicii'}
-						<ServicesManager bind:servicii={adminState.servicii} bind:parteneri={adminState.parteneri} refreshServices={() => adminState.refreshAll()} refreshPartners={() => adminState.refreshAll()} />
-					{:else if adminState.sectiuneActiva === 'galerie'}
-						<GalleryManager bind:galerie={adminState.galerie} refreshGallery={() => adminState.refreshAll()} />
-					{:else if adminState.sectiuneActiva === 'notificari'}
-						<NotificationsPanel evenimente={adminState.evenimente} />
-					{:else if adminState.sectiuneActiva === 'site'}
-						<SiteContentManager bind:continutSite={adminState.continutSite} refreshSite={() => adminState.refreshAll()} />
-					{/if}
+					</div>
+				{:else if adminState.sectiuneActiva === 'evenimente'}
+					<EventsManager 
+						bind:evenimente={adminState.evenimente} 
+						bind:rezervari={adminState.rezervari} 
+						servicii={adminState.servicii} 
+						refreshEvents={() => adminState.refreshEvents()} 
+						refreshBookings={() => adminState.refreshBookings()} 
+					/>
+				{:else if adminState.sectiuneActiva === 'echipament'}
+					<EquipmentManager bind:echipament={adminState.echipament} refreshEquipment={() => adminState.refreshAll()} />
+				{:else if adminState.sectiuneActiva === 'produse'}
+					<ShopManager bind:produse={adminState.produse} refreshProducts={() => adminState.refreshAll()} />
+				{:else if adminState.sectiuneActiva === 'comenzi'}
+					<OrdersManager bind:comenzi={adminState.comenzi} refreshOrders={() => adminState.refreshAll()} />
+				{:else if adminState.sectiuneActiva === 'utilizatori'}
+					<UsersManager bind:utilTotal={adminState.utilTotal} />
+				{:else if adminState.sectiuneActiva === 'servicii'}
+					<ServicesManager bind:servicii={adminState.servicii} bind:parteneri={adminState.parteneri} refreshServices={() => adminState.refreshAll()} refreshPartners={() => adminState.refreshAll()} />
+				{:else if adminState.sectiuneActiva === 'galerie'}
+					<GalleryManager bind:galerie={adminState.galerie} refreshGallery={() => adminState.refreshAll()} />
+				{:else if adminState.sectiuneActiva === 'blog'}
+					<BlogManager bind:articole={adminState.articole} refreshPosts={() => adminState.refreshPosts()} />
+				{:else if adminState.sectiuneActiva === 'email'}
+					<EmailManager />
+				{:else if adminState.sectiuneActiva === 'notificari'}
+					<NotificationsPanel evenimente={adminState.evenimente} />
+				{:else if adminState.sectiuneActiva === 'site'}
+					<SiteContentManager bind:continutSite={adminState.continutSite} refreshSite={() => adminState.refreshAll()} />
 				{/if}
 			</main>
 		</div>
@@ -173,6 +177,8 @@
 							{ id: 'utilizatori', label: '👥 Utilizatori' },
 							{ id: 'servicii', label: '🛠️ Servicii' },
 							{ id: 'galerie', label: '🖼️ Galerie' },
+							{ id: 'blog', label: '📰 Blog & Articole' },
+							{ id: 'email', label: '📬 Email & Newsletter' },
 							{ id: 'notificari', label: '📢 Notificări' },
 							{ id: 'site', label: '🌐 Conținut Site' },
 						] as r}

@@ -11,9 +11,10 @@ import { GalleryRepository } from '$lib/data/repositories/GalleryRepository';
 import { ContentRepository } from '$lib/data/repositories/ContentRepository';
 import { UserRepository } from '$lib/data/repositories/UserRepository';
 import { NotificationRepository } from '$lib/data/repositories/NotificationRepository';
+import { PostRepository } from '$lib/data/repositories/PostRepository';
 import type { 
 	EventRow, Booking, Product, OrderRow, Service, Equipment, 
-	Partner, Gallery, WebsiteContent, NotificationRow
+	Partner, Gallery, WebsiteContent, NotificationRow, Post
 } from '$lib/types';
 
 class AdminState {
@@ -33,6 +34,7 @@ class AdminState {
 	parteneri = $state<Partner[]>([]);
 	continutSite = $state<WebsiteContent[]>([]);
 	echipament = $state<Equipment[]>([]);
+	articole = $state<Post[]>([]);
 	notificari = $state<NotificationRow[]>([]);
 	notifUnread = $state(0);
 	
@@ -112,9 +114,9 @@ class AdminState {
 	async refreshAll() {
 		this.incarcare = true;
 		try {
-			await EventRepository.autoFinalizeEvents();
+			await EventRepository.autoFinalizeEvents().catch(() => {});
 			
-			const [ev, prod, rez, serv, gal, cmd, eq, pt, site, users, notifData] = await Promise.all([
+			const results = await Promise.allSettled([
 				EventRepository.getEvents(),
 				ProductRepository.getProducts(),
 				BookingRepository.getBookings(),
@@ -125,21 +127,26 @@ class AdminState {
 				PartnerRepository.getPartners(),
 				ContentRepository.getContent(),
 				UserRepository.getUsers(1, 1),
-				NotificationRepository.getNotifications(1, 100, 'all')
+				NotificationRepository.getNotifications(1, 100, 'all'),
+				PostRepository.getPosts(true)
 			]);
 
-			this.evenimente = ev;
-			this.produse = prod;
-			this.rezervari = rez;
-			this.servicii = serv;
-			this.galerie = gal;
-			this.comenzi = cmd;
-			this.echipament = eq;
-			this.parteneri = pt;
-			this.continutSite = site;
-			this.utilTotal = users.total;
-			this.notificari = notifData.data;
-			this.notifUnread = notifData.data.filter((n: any) => !n.is_read).length;
+			if (results[0].status === 'fulfilled') this.evenimente = results[0].value;
+			if (results[1].status === 'fulfilled') this.produse = results[1].value;
+			if (results[2].status === 'fulfilled') this.rezervari = results[2].value;
+			if (results[3].status === 'fulfilled') this.servicii = results[3].value;
+			if (results[4].status === 'fulfilled') this.galerie = results[4].value;
+			if (results[5].status === 'fulfilled') this.comenzi = results[5].value;
+			if (results[6].status === 'fulfilled') this.echipament = results[6].value;
+			if (results[7].status === 'fulfilled') this.parteneri = results[7].value;
+			if (results[8].status === 'fulfilled') this.continutSite = results[8].value;
+			if (results[9].status === 'fulfilled') this.utilTotal = results[9].value?.total || 0;
+			if (results[10].status === 'fulfilled') {
+				const notif = results[10].value;
+				this.notificari = notif?.data || [];
+				this.notifUnread = (notif?.data || []).filter((n: any) => !n.is_read).length;
+			}
+			if (results[11].status === 'fulfilled') this.articole = results[11].value;
 
 		} catch (err) {
 			console.error('Error refreshing admin data:', err);
@@ -155,6 +162,10 @@ class AdminState {
 
 	async refreshBookings() {
 		this.rezervari = await BookingRepository.getBookings();
+	}
+
+	async refreshPosts() {
+		this.articole = await PostRepository.getPosts(true);
 	}
 }
 

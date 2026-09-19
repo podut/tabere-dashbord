@@ -34,6 +34,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      posts: {
+        Row: {
+          id: string
+          slug: string
+          title: string
+          excerpt: string
+          content: string
+          featured_image: string
+          category: string
+          tags: string[]
+          author: string
+          reading_time_min: number
+          is_published: boolean
+          published_at: string | null
+          meta_title: string | null
+          meta_description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          title: string
+          excerpt?: string
+          content?: string
+          featured_image?: string
+          category?: string
+          tags?: string[]
+          author?: string
+          reading_time_min?: number
+          is_published?: boolean
+          published_at?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          title?: string
+          excerpt?: string
+          content?: string
+          featured_image?: string
+          category?: string
+          tags?: string[]
+          author?: string
+          reading_time_min?: number
+          is_published?: boolean
+          published_at?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       bookings: {
         Row: {
           activity_title: string

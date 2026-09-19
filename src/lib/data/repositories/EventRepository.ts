@@ -54,8 +54,9 @@ export class EventRepository {
 			.filter(e => {
 				const datePart = e.date?.substring(0, 10);
 				if (!datePart) return false;
-				const timePart = e.start_time && /^\d{2}:\d{2}$/.exec(e.start_time) ? e.start_time : '23:59';
-				return new Date(`${datePart}T${timePart}:00`) < now;
+				// Evenimentul rămâne activ pe tot parcursul zilei programate (până la 23:59:59)
+				const expiryLimit = new Date(`${datePart}T23:59:59`);
+				return expiryLimit < now;
 			})
 			.map(e => e.id);
 

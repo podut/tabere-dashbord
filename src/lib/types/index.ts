@@ -31,4 +31,7 @@ export type WebsiteContent = Omit<Row<'website_content'>, 'content'> & {
 };
 export type Profile = Row<'profiles'>;
 export type ParticipantProfile = Row<'participant_profiles'>;
+export type Post = Row<'posts'>;
+export type PostInsert = Insert<'posts'>;
+export type PostUpdate = Update<'posts'>;
 export type EventWithCounts = Database['public']['Views']['events_with_counts']['Row'];

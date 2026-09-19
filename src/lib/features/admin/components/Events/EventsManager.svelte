@@ -409,6 +409,7 @@
 	{:else}
 		<EventsTab
 			{evenimente}
+			{rezervari}
 			{tabActiv}
 			onEdit={deschideEveniment}
 			onFinalize={finalizeazaEveniment}

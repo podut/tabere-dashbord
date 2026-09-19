@@ -1,4 +1,6 @@
 <script lang="ts">
+	import ServicePreviewCard from './ServicePreviewCard.svelte';
+
 	let { service = $bindable(), editMode, categoriiExistente = [], onClose, onSave, onFotoSelectata, onFotoGalerieSelectata, stergedinArray, adaugaInArray, handleArrayKeydown, inputIncludes = $bindable(), inputPositions = $bindable(), incarcareGalerie }: {
 		service: any;
 		editMode: boolean;
@@ -14,11 +16,57 @@
 		inputPositions: string;
 		incarcareGalerie: boolean;
 	} = $props();
+
+	// Obiect reactiv pentru previzualizare — aceleasi fallback-uri ca pe site
+	// (tabere-website/website/script.js -> createServiceCard)
+	const livePreviewService = $derived({
+		title: service.title || 'Titlu Serviciu',
+		category: service.category || 'Serviciu Tactic',
+		description: service.description || service.short_desc || service.full_desc || '',
+		full_desc: service.full_desc || '',
+		price: service.price || 0,
+		price_label: service.price_label || '',
+		image_url: service.image_url || '',
+		gallery: service.gallery || [],
+		includes: service.includes || []
+	});
+
+	// Comutator mobil intre formular si previzualizare
+	let tabMobil = $state<'form' | 'preview'>('form');
 </script>
 
 <div class="modal-overlay">
 	<div class="login-card modal-serviciu">
-		<h2 style="margin-bottom: 2.4rem;">{editMode ? 'Editează' : 'Adaugă'} Serviciu</h2>
+		<div class="modal-serviciu-header">
+			<div class="modal-title-group">
+				<h2>{editMode ? 'Editează' : 'Adaugă'} Serviciu</h2>
+				<span class="live-indicator-badge">
+					<span class="live-pulse"></span> Preview Website în Timp Real
+				</span>
+			</div>
+
+			<div class="mobile-tabs-switch">
+				<button
+					type="button"
+					class="m-tab-btn"
+					class:active={tabMobil === 'form'}
+					onclick={() => (tabMobil = 'form')}
+				>
+					📝 Formular
+				</button>
+				<button
+					type="button"
+					class="m-tab-btn"
+					class:active={tabMobil === 'preview'}
+					onclick={() => (tabMobil = 'preview')}
+				>
+					👁️ Preview Site
+				</button>
+			</div>
+		</div>
+
+		<div class="modal-split-layout">
+		<div class="form-column" class:mobile-hidden={tabMobil === 'preview'}>
 		<form onsubmit={onSave}>
 
 			<!-- Secțiunea 1: Informații de bază -->
@@ -198,11 +246,135 @@
 				<button type="submit" class="buton-primar" style="flex:2">Salvează Serviciu</button>
 			</div>
 		</form>
+		</div>
+
+		<!-- COLOANA DREAPTA: PREVIEW WEBSITE -->
+		<div class="preview-column" class:mobile-hidden={tabMobil === 'form'}>
+			<div class="preview-sticky-box">
+				<div class="preview-box-header">
+					<div class="preview-box-title">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+						<span>Cum va arăta pe site (secțiunea Servicii):</span>
+					</div>
+					<span class="preview-chip">Live</span>
+				</div>
+
+				<div class="preview-card-viewport">
+					<ServicePreviewCard service={livePreviewService} />
+				</div>
+
+				{#if service.positions && service.positions.length > 0}
+					<div class="positions-preview-box">
+						<div class="pos-title">🪖 Poziții / Roluri ({service.positions.length}):</div>
+						<div class="pos-pills-list">
+							{#each service.positions as pos}
+								<span class="pos-pill">{pos}</span>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
+				{#if !service.active}
+					<div class="preview-warn-note">
+						⚠️ Serviciul este <strong>inactiv</strong> — nu va apărea deloc pe site
+						(site-ul cere <code>active=eq.true</code>).
+					</div>
+				{/if}
+
+				<div class="preview-hint-note">
+					💡 Orice modificare din formular se vede instant în card. Pozele din galerie sunt
+					clicabile, exact ca pe site.
+				</div>
+			</div>
+		</div>
+		</div>
 	</div>
 </div>
 
 <style>
-	.modal-serviciu { max-width: 75rem !important; max-height: 90vh; overflow-y: auto; }
+	.modal-serviciu { max-width: 118rem !important; max-height: 90vh; overflow-y: auto; }
+
+	/* HEADER + SPLIT (acelasi pattern ca EventModal) */
+	.modal-serviciu-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1.6rem;
+		flex-wrap: wrap;
+		margin-bottom: 2.4rem;
+	}
+	.modal-serviciu-header h2 { margin: 0; }
+	.modal-title-group { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+
+	.live-indicator-badge {
+		display: inline-flex; align-items: center; gap: 0.6rem;
+		background: rgba(81, 207, 102, 0.12); border: 1px solid rgba(81, 207, 102, 0.35);
+		color: #51cf66; font-size: 1.15rem; font-weight: 700;
+		padding: 0.3rem 0.9rem; border-radius: 20px;
+	}
+	.live-pulse {
+		width: 7px; height: 7px; background: #51cf66; border-radius: 50%;
+		box-shadow: 0 0 8px #51cf66; animation: pulseLive 1.5s infinite;
+	}
+	@keyframes pulseLive {
+		0%, 100% { opacity: 1; transform: scale(1); }
+		50% { opacity: 0.4; transform: scale(1.3); }
+	}
+
+	.mobile-tabs-switch { display: none; gap: 0.4rem; background: rgba(0,0,0,0.4); padding: 0.4rem; border-radius: 10px; }
+	.m-tab-btn {
+		padding: 0.7rem 1.2rem; border: none; background: transparent; color: var(--text-grey);
+		font-size: 1.25rem; font-weight: 700; border-radius: 8px; cursor: pointer; white-space: nowrap;
+	}
+	.m-tab-btn.active { background: var(--bg-card); color: var(--primary); }
+
+	.modal-split-layout {
+		display: grid;
+		/* minmax(0, ...) ca previzualizarea sa nu dilate coloana pe ecrane mici */
+		grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+		gap: 2.4rem;
+		align-items: start;
+	}
+	.form-column, .preview-column { min-width: 0; }
+
+	.preview-sticky-box {
+		position: sticky; top: 0;
+		background: rgba(0, 0, 0, 0.35);
+		border: 1px solid var(--border);
+		border-radius: 16px; padding: 1.6rem;
+		display: flex; flex-direction: column; gap: 1.6rem;
+	}
+
+	.preview-box-header {
+		display: flex; justify-content: space-between; align-items: center;
+		gap: 0.8rem; flex-wrap: wrap;
+		border-bottom: 1px solid var(--border); padding-bottom: 1.2rem;
+	}
+	.preview-box-title {
+		display: flex; align-items: center; gap: 0.8rem;
+		font-size: 1.3rem; font-weight: 800; color: var(--primary-light);
+	}
+	.preview-chip {
+		background: rgba(197, 160, 48, 0.15); border: 1px solid var(--primary);
+		color: var(--primary); font-size: 1.1rem; font-weight: 800;
+		padding: 0.2rem 0.8rem; border-radius: 6px;
+	}
+
+	.preview-card-viewport { max-height: 62vh; overflow-y: auto; overflow-x: hidden; }
+
+	.positions-preview-box { border-top: 1px solid var(--border); padding-top: 1.2rem; }
+	.pos-title { font-size: 1.2rem; font-weight: 700; color: var(--primary-light); margin-bottom: 0.8rem; }
+	.pos-pills-list { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+	.pos-pill {
+		background: var(--bg-card); border: 1px solid var(--border);
+		border-radius: 20px; padding: 0.3rem 1rem; font-size: 1.2rem; font-weight: 600;
+	}
+
+	.preview-warn-note {
+		background: rgba(224, 49, 49, 0.12); border: 1px solid rgba(224, 49, 49, 0.4);
+		border-radius: 10px; padding: 1rem 1.2rem; font-size: 1.2rem; color: #ff8787; line-height: 1.5;
+	}
+	.preview-hint-note { font-size: 1.2rem; color: var(--text-grey); line-height: 1.5; font-style: italic; }
 	.sectiune-form { border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2.4rem; background: var(--bg-dark); }
 	.sectiune-titlu { font-size: 1.2rem; font-weight: 800; color: var(--primary); margin-bottom: 1.6rem; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.9; }
 	.form-row-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.6rem; }
@@ -234,4 +406,17 @@
 	.img-preview-full { display: block; width: 100%; max-height: 22rem; object-fit: cover; }
 	.upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; opacity: 0; transition: opacity 0.2s; backdrop-filter: blur(4px); }
 	.upload-zone:hover .upload-overlay { opacity: 1; }
+
+	@media (max-width: 900px) {
+		.modal-split-layout { grid-template-columns: minmax(0, 1fr); }
+		.mobile-tabs-switch { display: flex; }
+		.mobile-hidden { display: none !important; }
+		.preview-sticky-box { position: static; }
+		.preview-card-viewport { max-height: none; }
+	}
+
+	@media (max-width: 600px) {
+		.form-row-3col, .form-row-2col { grid-template-columns: 1fr; }
+		.modal-serviciu-header { gap: 1.2rem; }
+	}
 </style>

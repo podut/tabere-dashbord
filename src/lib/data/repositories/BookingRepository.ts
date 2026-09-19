@@ -49,12 +49,35 @@ export class BookingRepository {
 	}
 
 	static async assignPosition(bookingId: string, position: string) {
-		const { error } = await supabase
+		const { data, error } = await supabase
 			.from('bookings')
 			.update({ selected_position: position, status: 'confirmat' })
-			.eq('id', bookingId);
+			.eq('id', bookingId)
+			.select()
+			.single();
 		
 		if (error) throw error;
+
+		// Trimitere automată email confirmare în Mailpit dacă există email
+		if (data?.email) {
+			import('$lib/services/EmailService').then(({ EmailService }) => {
+				EmailService.sendBookingConfirmation({
+					recruitName: data.nume_client || 'Recrut',
+					recruitEmail: data.email,
+					eventTitle: data.activity_title || 'Misiune Airsoft',
+					eventDate: data.preferred_date || undefined,
+					eventTime: data.preferred_time || undefined,
+					position: position,
+					ticketCode: data.private_code || (() => {
+						const arr = new Uint32Array(1);
+						crypto.getRandomValues(arr);
+						return `HTC-${100000 + (arr[0] % 900000)}`;
+					})()
+				}).catch(() => {});
+			});
+		}
+
+		return data;
 	}
 
 	static async releasePosition(bookingId: string) {
