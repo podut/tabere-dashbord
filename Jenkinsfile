@@ -24,30 +24,26 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build & Push (linux/arm64)') {
             steps {
-                sh """
-                    docker build \\
-                        --build-arg PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL} \\
-                        --build-arg PUBLIC_SUPABASE_ANON_KEY=${PUBLIC_SUPABASE_KEY} \\
-                        --build-arg PUBLIC_STORAGE_BUCKET=${PUBLIC_STORAGE_BUCKET} \\
-                        -t ${DOCKER_IMAGE}:${IMAGE_TAG} \\
-                        -t ${DOCKER_IMAGE}:latest \\
-                        .
-                """
-            }
-        }
-
-        stage('Push to DockerHub') {
-            steps {
+                // Serverul tinta (130.61.130.152) e ARM64 (Oracle Ampere),
+                // dar build-ul ruleaza pe un host amd64 - trebuie buildx +
+                // emulare QEMU, altfel containerul crapa cu "exec format error".
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhubrepo',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                    sh "docker push ${DOCKER_IMAGE}:${IMAGE_TAG}"
-                    sh "docker push ${DOCKER_IMAGE}:latest"
+                    sh """
+                        docker buildx build --platform linux/arm64 \\
+                            --build-arg PUBLIC_SUPABASE_URL=${PUBLIC_SUPABASE_URL} \\
+                            --build-arg PUBLIC_SUPABASE_ANON_KEY=${PUBLIC_SUPABASE_KEY} \\
+                            --build-arg PUBLIC_STORAGE_BUCKET=${PUBLIC_STORAGE_BUCKET} \\
+                            -t ${DOCKER_IMAGE}:${IMAGE_TAG} \\
+                            -t ${DOCKER_IMAGE}:latest \\
+                            --push .
+                    """
                 }
             }
         }
