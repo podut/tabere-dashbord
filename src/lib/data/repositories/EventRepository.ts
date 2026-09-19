@@ -23,6 +23,46 @@ export class EventRepository {
 		return data;
 	}
 
+	/**
+	 * Evenimente publice, active, cu data viitoare (sau in ziua curenta, pana la 23:59:59).
+	 * Centralizeaza filtrul folosit de website-ul public.
+	 */
+	static async getPublicUpcoming() {
+		const { data, error } = await supabase
+			.from('events')
+			.select('*')
+			.eq('active', true)
+			.eq('is_public', true)
+			.order('date', { ascending: true });
+
+		if (error) throw error;
+
+		const now = new Date();
+		const events = (data || []).filter((e) => {
+			const datePart = e.date?.substring(0, 10);
+			if (!datePart) return false;
+			const expiryLimit = new Date(`${datePart}T23:59:59`);
+			return expiryLimit >= now;
+		});
+
+		const { data: bookings, error: bookingsError } = await supabase
+			.from('bookings')
+			.select('event_id, status')
+			.in(
+				'status',
+				['confirmat', 'nou']
+			);
+		if (bookingsError) throw bookingsError;
+
+		const bookedCount = new Map<string, number>();
+		for (const b of bookings || []) {
+			if (!b.event_id) continue;
+			bookedCount.set(b.event_id, (bookedCount.get(b.event_id) || 0) + 1);
+		}
+
+		return events.map((e) => ({ ...e, booked_count: bookedCount.get(e.id) || 0 }));
+	}
+
 	static async deleteEvent(id: string) {
 		const { error } = await supabase.from('events').delete().eq('id', id);
 		if (error) throw error;

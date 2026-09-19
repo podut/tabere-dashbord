@@ -5,7 +5,9 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	server: {
 		proxy: {
-			'/api': 'http://localhost:8000'
+			// /api/public/* e servit de rutele SvelteKit proprii (+server.ts),
+			// nu trebuie proxy-uit. Restul lui /api ramane pe vechiul tool local.
+			'^/api(?!/public)': 'http://localhost:8000'
 		}
 	}
 });

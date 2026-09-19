@@ -72,6 +72,14 @@ export class PostRepository {
 		return data;
 	}
 
+	static async incrementDwell(slug: string, dwellSeconds: number): Promise<void> {
+		const { error } = await supabase.rpc('record_post_dwell_time', {
+			p_slug: slug,
+			p_dwell_seconds: dwellSeconds
+		});
+		if (error) throw error;
+	}
+
 	static async deletePost(id: string): Promise<void> {
 		const { error } = await supabase.from('posts').delete().eq('id', id);
 		if (error) throw error;

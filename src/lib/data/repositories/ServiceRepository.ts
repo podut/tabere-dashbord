@@ -12,6 +12,17 @@ export class ServiceRepository {
 		return data || [];
 	}
 
+	static async getPublicList() {
+		const { data, error } = await supabase
+			.from('services')
+			.select('*')
+			.eq('active', true)
+			.order('order', { ascending: true });
+
+		if (error) throw error;
+		return data || [];
+	}
+
 	static async saveService(service: Insert<'services'> | Update<'services'>) {
 		const isUpdate = 'id' in service && service.id;
 		const { data, error } = isUpdate

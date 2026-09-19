@@ -11,6 +11,17 @@ export class ContentRepository {
 		return (data as WebsiteContent[]) || [];
 	}
 
+	static async getBySectionId(sectionId: string) {
+		const { data, error } = await supabase
+			.from('website_content')
+			.select('*')
+			.eq('section_id', sectionId)
+			.maybeSingle();
+
+		if (error) throw error;
+		return data as WebsiteContent | null;
+	}
+
 	static async updateContent(id: string, content: any) {
 		const { data, error } = await supabase
 			.from('website_content')

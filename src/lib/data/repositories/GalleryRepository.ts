@@ -12,6 +12,19 @@ export class GalleryRepository {
 		return data || [];
 	}
 
+	static async getPublicPage(page = 1, limit = 12) {
+		const from = (page - 1) * limit;
+		const to = from + limit - 1;
+		const { data, error, count } = await supabase
+			.from('gallery')
+			.select('*', { count: 'exact' })
+			.order('order', { ascending: true })
+			.range(from, to);
+
+		if (error) throw error;
+		return { items: data || [], total: count ?? 0, page, limit };
+	}
+
 	static async saveImage(image: Insert<'gallery'> | Update<'gallery'>) {
 		const isUpdate = 'id' in image && image.id;
 		const { data, error } = isUpdate

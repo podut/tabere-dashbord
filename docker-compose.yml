@@ -8,6 +8,8 @@ services:
         PUBLIC_STORAGE_BUCKET: ${PUBLIC_STORAGE_BUCKET}
     container_name: htcmx-web-admin
     restart: unless-stopped
+    environment:
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     ports:
       - "3100:3000"
 
@@ -29,6 +31,8 @@ services:
         PUBLIC_STORAGE_BUCKET: ${PUBLIC_STORAGE_BUCKET}
     container_name: htcmx-web-admin-local
     restart: unless-stopped
+    environment:
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
