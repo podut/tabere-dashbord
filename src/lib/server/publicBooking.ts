@@ -1,5 +1,5 @@
 import { supabase } from '$lib/supabase';
-import { supabaseAdmin } from '$lib/server/supabase.server';
+import { getSupabaseAdmin } from '$lib/server/supabase.server';
 
 export class PublicBookingError extends Error {
 	constructor(
@@ -52,7 +52,7 @@ export async function createPublicBooking(input: PublicBookingInput) {
 		eventTitle = event.title ?? undefined;
 
 		if (typeof event.max_participants === 'number') {
-			const { count, error: countError } = await supabaseAdmin
+			const { count, error: countError } = await getSupabaseAdmin()
 				.from('bookings')
 				.select('id', { count: 'exact', head: true })
 				.eq('event_id', input.event_id)
