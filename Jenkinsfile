@@ -9,9 +9,9 @@ pipeline {
     environment {
         DOCKER_IMAGE           = 'podutpetru/airsoft-admin'
         IMAGE_TAG              = "${BUILD_NUMBER}"
-        COOLIFY_URL            = 'https://coolify.petrupodut.dev'
+        COOLIFY_URL            = 'http://host.docker.internal:8000'
         COOLIFY_SERVICE_UUID   = 'f2r191wdhse4pqzlcdvd8zjr'
-        PUBLIC_SUPABASE_URL    = 'https://supabase.petrupodut.dev'
+        PUBLIC_SUPABASE_URL    = 'https://supabase.taberehtcmx.ro'
         PUBLIC_SUPABASE_KEY    = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3OTk5MTA4MCwiZXhwIjo0OTM1NjY0NjgwLCJyb2xlIjoiYW5vbiJ9.4lPxOrqOJp0ucXylIcQeevEI-gqNbz-Xox5y2IXnGD4'
         PUBLIC_STORAGE_BUCKET  = 'assets'
     }
