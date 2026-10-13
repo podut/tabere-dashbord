@@ -17,12 +17,15 @@
     --success:        #51cf66;
     --success-tint:   rgba(81, 207, 102, 0.12);
     --accent-blue:    #6fa9c4;
+    /* Tipografia site-ului public (taberehtcmx.ro) */
+    --font-heading:   'Oswald', 'Arial Narrow', sans-serif;
+    --font-body:      'Roboto', system-ui, sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { font-size: 62.5%; }
 body {
-    font-family: 'Rubik', sans-serif;
+    font-family: var(--font-body);
     line-height: 1.6;
     color: var(--text);
     background-color: var(--bg-dark);
@@ -302,3 +305,32 @@ tr:hover td { background-color: var(--primary-tint); }
     .login-card h2 { font-size: 1.8rem; }
     .eq-parent-info img { height: 4.5rem !important; width: 4.5rem !important; }
 }
+
+
+/* ============================================================
+   TEMA SITE-ULUI: aceeasi tipografie ca pe taberehtcmx.ro
+   Oswald (uppercase, spatiat) pentru titluri, navigare, butoane si
+   etichete; Roboto pentru text. Culorile erau deja aliniate.
+   ============================================================ */
+h1, h2, h3, h4,
+.logo-text, .badge-admin, .eticheta, .sectiune-label,
+.titlu-pagina h1, .login-card h2 {
+    font-family: var(--font-heading);
+}
+
+.titlu-pagina h1, .login-card h2 { text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+.logo-text { letter-spacing: 2px; }
+
+.admin-wrapper .sidebar button,
+.mobile-nav button,
+.drawer-nav button,
+.buton-primar,
+.buton-iesire,
+button[class*="tab-item"],
+button[class*="subtab"] {
+    font-family: var(--font-heading);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.valoare { font-family: var(--font-heading); letter-spacing: 0.5px; }

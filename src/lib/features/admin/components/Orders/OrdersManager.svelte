@@ -152,6 +152,16 @@
 	.tab-item-orders:hover { background: rgba(255,255,255,0.05); color: var(--text); }
 	.tab-item-orders.activ { background: var(--bg-card); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 1px solid var(--border); }
 
+	/* Pe telefon tab-urile nu incap pe o linie: bara devine scroll orizontal,
+	   iar pagina nu mai iese din ecran. */
+	@media (max-width: 600px) {
+		.bara-filtrare { flex-direction: column; align-items: stretch; gap: 1.2rem; }
+		.tabs-intern { max-width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+		.tabs-intern::-webkit-scrollbar { display: none; }
+		.tab-item-orders { flex: 0 0 auto; white-space: nowrap; padding: 0.8rem 1.2rem; }
+		.search-wrapper { max-width: 100%; }
+	}
+
 	.count-bubble { background: var(--bg-dark); color: var(--text-grey); padding: 0.1rem 0.6rem; border-radius: 100px; font-size: 1.1rem; }
 	.activ .count-bubble { background: var(--primary); color: var(--bg-dark); font-weight: 800; }
 

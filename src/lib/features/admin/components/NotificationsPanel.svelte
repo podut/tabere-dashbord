@@ -241,6 +241,9 @@
 	.mobile-only-grid { display: none; }
 	.tabs-stanga { display: flex; align-items: center; gap: 2rem; }
 	
+	.tabs-intern-notif { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+	.tabs-intern-notif::-webkit-scrollbar { display: none; }
+	.tabs-intern-notif :global(button) { flex: 0 0 auto; white-space: nowrap; }
 	.tabs-intern-notif { display: flex; background: rgba(0,0,0,0.3); padding: 0.5rem; border-radius: 12px; border: 1px solid var(--border); gap: 0.5rem; }
 	
 	.tab-item-notif {
