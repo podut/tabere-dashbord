@@ -17,6 +17,7 @@
 	import UsersManager from '$lib/features/admin/components/Users/UsersManager.svelte';
 	import SiteContentManager from '$lib/features/admin/components/SiteContent/SiteContentManager.svelte';
 	import BackupManager from '$lib/features/admin/components/Backup/BackupManager.svelte';
+	import TeamManager from '$lib/features/admin/components/Team/TeamManager.svelte';
 	import NotificationsPanel from '$lib/features/admin/components/NotificationsPanel.svelte';
 	import ServicesManager from '$lib/features/admin/components/ServicesManager.svelte';
 	import GalleryManager from '$lib/features/admin/components/GalleryManager.svelte';
@@ -58,6 +59,15 @@
 		await supabase.auth.signOut();
 	}
 
+	// Un moderator nu vede dashboard-ul/sectiunile fara drept: il mutam pe prima permisa.
+	$effect(() => {
+		if (!adminState.authenticated) return;
+		if (adminState.canSee(adminState.sectiuneActiva)) return;
+		const first = ['evenimente', 'servicii', 'echipament', 'produse', 'comenzi', 'galerie', 'blog', 'notificari', 'site']
+			.find((s) => adminState.canSee(s));
+		if (first) adminState.sectiuneActiva = first;
+	});
+
 	onMount(() => {
 		const saved = localStorage.getItem('admin_sectiune');
 		if (saved) adminState.sectiuneActiva = saved;
@@ -93,6 +103,7 @@
 			</div>
 		</header>
 
+		{#if adminState.isAdmin}
 		<div class="desktop-only-stats">
 			<StatsGrid 
 				venituri={adminState.venituri} 
@@ -101,27 +112,55 @@
 				evenimenteDeFinalizat={adminState.evenimenteDeFinalizat} 
 			/>
 		</div>
+		{/if}
 	
 		<div class="layout-continut">
 			<aside class="sidebar">
 				<nav>
+					{#if adminState.canSee('evenimente')}
 					<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => setSectiune('evenimente')}><span class="nav-icon">📅</span><span class="nav-label">Evenimente</span></button>
+					{/if}
+					{#if adminState.canSee('echipament')}
 					<button class:activ={adminState.sectiuneActiva === 'echipament'} onclick={() => setSectiune('echipament')}><span class="nav-icon">🔫</span><span class="nav-label">Echipament</span></button>
+					{/if}
+					{#if adminState.canSee('produse')}
 					<button class:activ={adminState.sectiuneActiva === 'produse'} onclick={() => setSectiune('produse')}><span class="nav-icon">🛒</span><span class="nav-label">Produse</span></button>
+					{/if}
+					{#if adminState.canSee('comenzi')}
 					<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => setSectiune('comenzi')}><span class="nav-icon">📦</span><span class="nav-label">Comenzi</span></button>
+					{/if}
+					{#if adminState.canSee('utilizatori')}
 					<button class:activ={adminState.sectiuneActiva === 'utilizatori'} onclick={() => setSectiune('utilizatori')}><span class="nav-icon">👥</span><span class="nav-label">Utilizatori</span></button>
+					{/if}
+					{#if adminState.canSee('servicii')}
 					<button class:activ={adminState.sectiuneActiva === 'servicii'} onclick={() => setSectiune('servicii')}><span class="nav-icon">🛠️</span><span class="nav-label">Servicii</span></button>
+					{/if}
+					{#if adminState.canSee('galerie')}
 					<button class:activ={adminState.sectiuneActiva === 'galerie'} onclick={() => setSectiune('galerie')}><span class="nav-icon">🖼️</span><span class="nav-label">Galerie</span></button>
+					{/if}
+					{#if adminState.canSee('blog')}
 					<button class:activ={adminState.sectiuneActiva === 'blog'} onclick={() => setSectiune('blog')}><span class="nav-icon">📰</span><span class="nav-label">Blog & Articole</span></button>
+					{/if}
+					{#if adminState.canSee('email')}
 					<button class:activ={adminState.sectiuneActiva === 'email'} onclick={() => setSectiune('email')}><span class="nav-icon">📬</span><span class="nav-label">Email & Newsletter</span></button>
+					{/if}
+					{#if adminState.canSee('notificari')}
 					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => setSectiune('notificari')}><span class="nav-icon">📢</span><span class="nav-label">Notificări</span></button>
+					{/if}
+					{#if adminState.canSee('site')}
 					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => setSectiune('site')}><span class="nav-icon">📱</span><span class="nav-label">Aplicație mobilă</span></button>
+					{/if}
+					{#if adminState.canSee('backup')}
 					<button class:activ={adminState.sectiuneActiva === 'backup'} onclick={() => setSectiune('backup')}><span class="nav-icon">💾</span><span class="nav-label">Backup</span></button>
+					{/if}
+					{#if adminState.canSee('echipa')}
+					<button class:activ={adminState.sectiuneActiva === 'echipa'} onclick={() => setSectiune('echipa')}><span class="nav-icon">🛡️</span><span class="nav-label">Echipă & acces</span></button>
+					{/if}
 				</nav>
 			</aside>
 
 			<main class="zona-lucru">
-				{#if adminState.sectiuneActiva === 'dashboard'}
+				{#if adminState.sectiuneActiva === 'dashboard' && adminState.isAdmin}
 					<div class="mobile-only-stats">
 						<StatsGrid 
 							venituri={adminState.venituri} 
@@ -158,8 +197,10 @@
 					<NotificationsPanel evenimente={adminState.evenimente} />
 				{:else if adminState.sectiuneActiva === 'site'}
 					<SiteContentManager bind:continutSite={adminState.continutSite} refreshSite={() => adminState.refreshAll()} />
-				{:else if adminState.sectiuneActiva === 'backup'}
+				{:else if adminState.sectiuneActiva === 'backup' && adminState.isAdmin}
 					<BackupManager />
+				{:else if adminState.sectiuneActiva === 'echipa' && adminState.isAdmin}
+					<TeamManager />
 				{/if}
 			</main>
 		</div>
@@ -186,7 +227,8 @@
 							{ id: 'notificari', label: '📢 Notificări' },
 							{ id: 'site', label: '📱 Aplicație mobilă' },
 							{ id: 'backup', label: '💾 Backup' },
-						] as r}
+							{ id: 'echipa', label: '🛡️ Echipă & acces' },
+						].filter((r) => adminState.canSee(r.id)) as r}
 							<button class:activ={adminState.sectiuneActiva === r.id} onclick={() => { setSectiune(r.id); mobileMenuOpen = false; }}>{r.label}</button>
 						{/each}
 					</nav>
@@ -196,15 +238,21 @@
 
 		<!-- Mobile Bottom Nav -->
 		<nav class="mobile-nav">
-			<button class:activ={adminState.sectiuneActiva === 'dashboard'} onclick={() => setSectiune('dashboard')}>
+			{#if adminState.canSee('dashboard')}
+<button class:activ={adminState.sectiuneActiva === 'dashboard'} onclick={() => setSectiune('dashboard')}>
 				<span>📊</span><small>Stats</small>
 			</button>
-			<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => setSectiune('evenimente')}>
+			{/if}
+			{#if adminState.canSee('evenimente')}
+<button class:activ={adminState.sectiuneActiva === 'evenimente'} onclick={() => setSectiune('evenimente')}>
 				<span>📅</span><small>Evenim.</small>
 			</button>
-			<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => setSectiune('comenzi')}>
+			{/if}
+			{#if adminState.canSee('comenzi')}
+<button class:activ={adminState.sectiuneActiva === 'comenzi'} onclick={() => setSectiune('comenzi')}>
 				<span>📦</span><small>Comenzi</small>
 			</button>
+			{/if}
 			<button onclick={() => mobileMenuOpen = true}>
 				<span>🍔</span><small>Meniu</small>
 			</button>

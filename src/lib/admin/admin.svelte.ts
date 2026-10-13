@@ -40,6 +40,27 @@ class AdminState {
 	
 	incarcare = $state(false);
 	sectiuneActiva = $state('evenimente');
+	isAdmin = $state(false);
+	permissions = $state<string[]>([]);
+
+	/** Poate utilizatorul curent vedea/gestiona sectiunea (id-ul din meniu)? */
+	canSee(section: string): boolean {
+		if (this.isAdmin) return true;
+		const need: Record<string, string[]> = {
+			evenimente: ['events', 'bookings'],
+			echipament: ['equipment'],
+			produse: ['products'],
+			comenzi: ['orders'],
+			servicii: ['services'],
+			galerie: ['gallery'],
+			blog: ['blog'],
+			notificari: ['notifications'],
+			site: ['site']
+		};
+		const req = need[section];
+		if (!req) return false; // dashboard (venituri), utilizatori, email, backup, echipa: doar admin
+		return req.some((r) => this.permissions.includes(r));
+	}
 
 	// Derivate
 	venituri = $derived(
@@ -75,8 +96,9 @@ class AdminState {
 	 * inainte sa incarcam vreo date (bookings/orders/profiles contin PII).
 	 */
 	async verifyAdminAndLoad(user: User) {
-		const { data: isAdmin, error } = await supabase.rpc('is_admin');
-		if (error || !isAdmin) {
+		const { data: access, error } = await supabase.rpc('my_access');
+		const acc = (access ?? {}) as { is_admin?: boolean; is_staff?: boolean; permissions?: string[] };
+		if (error || !acc.is_staff) {
 			this.accessDenied = true;
 			this.user = null;
 			this.authenticated = false;
@@ -84,6 +106,8 @@ class AdminState {
 			return;
 		}
 
+		this.isAdmin = acc.is_admin === true;
+		this.permissions = acc.permissions ?? [];
 		this.accessDenied = false;
 		this.user = user;
 		this.authenticated = true;

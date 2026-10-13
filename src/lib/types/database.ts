@@ -603,6 +603,7 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          permissions: string[]
           phone: string
           role: Database["public"]["Enums"]["user_role"]
         }
@@ -614,6 +615,7 @@ export type Database = {
           email?: string | null
           id: string
           name?: string
+          permissions?: string[]
           phone?: string
           role?: Database["public"]["Enums"]["user_role"]
         }
@@ -625,6 +627,7 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          permissions?: string[]
           phone?: string
           role?: Database["public"]["Enums"]["user_role"]
         }
@@ -859,6 +862,8 @@ export type Database = {
       handle_new_user: { Args: never; Returns: undefined }
       admin_backup_dump: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
+      my_access: { Args: never; Returns: Json }
+      has_perm: { Args: { area: string }; Returns: boolean }
       mark_notification_read: {
         Args: { p_notification_id: string; p_device_id: string }
         Returns: undefined
