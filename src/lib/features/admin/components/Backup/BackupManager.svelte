@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { zipSync, strToU8 } from 'fflate';
+	import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+	import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 	import { supabase } from '$lib/supabase';
 	import { showToast } from '$lib/admin/notify.svelte';
 
 	type StorageItem = { bucket: string; name: string; size: number; mimetype: string | null };
 
 	let loading = $state(false);
+	let password = $state('');
 	let phase = $state('');
 	let done = $state(0);
 	let total = $state(0);
@@ -29,16 +32,39 @@
 		setTimeout(() => URL.revokeObjectURL(url), 30_000);
 	}
 
-	async function fetchDump(): Promise<string> {
-		const { data, error } = await supabase.rpc('admin_backup_dump');
+	// Backup-ul cere autentificare cu parola RECENTA (verificat si in baza de date,
+	// nu doar aici): folosim un client separat, ca sesiunea curenta sa ramana
+	// neschimbata, iar la final il inchidem.
+	async function reauthClient(): Promise<SupabaseClient> {
+		const { data: u } = await supabase.auth.getUser();
+		const email = u.user?.email;
+		if (!email) throw new Error('Sesiune expirată: reautentifică-te în panou');
+		if (!password) throw new Error('Introdu parola contului de admin');
+
+		const client = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+			auth: {
+				persistSession: false,
+				autoRefreshToken: false,
+				detectSessionInUrl: false,
+				storageKey: 'htcmx-backup-reauth'
+			}
+		});
+		const { error } = await client.auth.signInWithPassword({ email, password });
+		password = '';
+		if (error) throw new Error('Parolă incorectă');
+		return client;
+	}
+
+	async function fetchDump(client: SupabaseClient): Promise<string> {
+		const { data, error } = await client.rpc('admin_backup_dump');
 		if (error) throw error;
 		const dump = data as unknown as string;
 		if (typeof dump !== 'string' || dump.length === 0) throw new Error('Backup gol');
 		return dump;
 	}
 
-	async function fetchStorageIndex(): Promise<StorageItem[]> {
-		const { data, error } = await (supabase as any).rpc('admin_backup_storage_index');
+	async function fetchStorageIndex(client: SupabaseClient): Promise<StorageItem[]> {
+		const { data, error } = await client.rpc('admin_backup_storage_index');
 		if (error) throw error;
 		return (data ?? []) as StorageItem[];
 	}
@@ -95,9 +121,13 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 		loading = true;
 		done = 0;
 		total = 0;
+		let client: SupabaseClient | null = null;
 		try {
+			phase = 'Se verifică parola…';
+			client = await reauthClient();
 			phase = 'Se exportă baza de date…';
-			const [dump, index] = await Promise.all([fetchDump(), fetchStorageIndex()]);
+			const [dump, index] = await Promise.all([fetchDump(client), fetchStorageIndex(client)]);
+			const sb = client;
 
 			total = index.length;
 			phase = `Se descarcă fișierele (0/${total})…`;
@@ -109,7 +139,7 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 				while (next < index.length) {
 					const item = index[next++];
 					try {
-						const { data, error } = await supabase.storage.from(item.bucket).download(item.name);
+						const { data, error } = await sb.storage.from(item.bucket).download(item.name);
 						if (error || !data) throw error ?? new Error('fără conținut');
 						files[`storage/${item.bucket}/${item.name}`] = new Uint8Array(await data.arrayBuffer());
 					} catch (e: any) {
@@ -160,6 +190,7 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 			console.error('Backup eșuat', e);
 			showToast('error', `Backup eșuat: ${e?.message ?? 'eroare necunoscută'}`);
 		} finally {
+			await client?.auth.signOut({ scope: 'local' }).catch(() => {});
 			loading = false;
 			phase = '';
 		}
@@ -168,15 +199,19 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 	async function doarSql() {
 		if (loading) return;
 		loading = true;
-		phase = 'Se exportă baza de date…';
+		phase = 'Se verifică parola…';
+		let client: SupabaseClient | null = null;
 		try {
-			const dump = await fetchDump();
+			client = await reauthClient();
+			phase = 'Se exportă baza de date…';
+			const dump = await fetchDump(client);
 			const name = `htcmx-db-${stamp(new Date())}.sql`;
 			saveBlob(new Blob([dump], { type: 'application/sql;charset=utf-8' }), name);
 			showToast('success', 'Backup SQL descărcat');
 		} catch (e: any) {
 			showToast('error', `Backup eșuat: ${e?.message ?? 'eroare necunoscută'}`);
 		} finally {
+			await client?.auth.signOut({ scope: 'local' }).catch(() => {});
 			loading = false;
 			phase = '';
 		}
@@ -198,7 +233,19 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 			</p>
 		</div>
 
-		<button class="btn-backup" onclick={backupComplet} disabled={loading}>
+		<label class="pw-field">
+			<span>Parola contului de admin (confirmare)</span>
+			<input
+				type="password"
+				autocomplete="current-password"
+				placeholder="••••••••"
+				bind:value={password}
+				disabled={loading}
+				onkeydown={(e) => e.key === 'Enter' && password && backupComplet()}
+			/>
+		</label>
+
+		<button class="btn-backup" onclick={backupComplet} disabled={loading || !password}>
 			{loading ? 'Se pregătește…' : '💾 Descarcă backup complet'}
 		</button>
 
@@ -219,7 +266,7 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 			</p>
 		{/if}
 
-		<button class="btn-link" onclick={doarSql} disabled={loading}>Doar baza de date (.sql, fără fișiere)</button>
+		<button class="btn-link" onclick={doarSql} disabled={loading || !password}>Doar baza de date (.sql, fără fișiere)</button>
 	</div>
 
 	<div class="backup-note">
@@ -227,6 +274,11 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 		<p>
 			Instrucțiunile sunt în <code>README.txt</code> din arhivă: <code>psql … -f database.sql</code> pentru date și
 			conturi, apoi <code>python restore_storage.py</code> pentru fișiere.
+		</p>
+		<h4>De ce cere parola</h4>
+		<p>
+			Backup-ul conține toate datele, așa că cere reintroducerea parolei de admin (verificată și în baza de date,
+			valabilă 5 minute). O sesiune lăsată deschisă sau furată nu poate genera backup fără parolă.
 		</p>
 		<h4>Păstrează arhiva în siguranță</h4>
 		<p>
@@ -244,6 +296,8 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 	.btn-backup { background: var(--primary); color: var(--bg-dark); border: none; border-radius: 10px; padding: 1.2rem 2.4rem; font-size: 1.6rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
 	.btn-backup:hover { opacity: 0.85; }
 	.btn-backup:disabled { opacity: 0.5; cursor: progress; }
+	.pw-field { display: flex; flex-direction: column; gap: 0.6rem; width: min(100%, 36rem); font-size: 1.3rem; color: var(--text-grey); }
+	.pw-field input { background: var(--bg-dark); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; font-size: 1.5rem; }
 	.btn-link { background: none; border: none; color: var(--text-grey); font-size: 1.3rem; text-decoration: underline; cursor: pointer; padding: 0; }
 	.btn-link:disabled { opacity: 0.5; cursor: default; }
 	.progress { width: 100%; }
