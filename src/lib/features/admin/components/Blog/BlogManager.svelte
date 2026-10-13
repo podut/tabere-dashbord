@@ -4,6 +4,8 @@
 	import { PostRepository } from '$lib/data/repositories/PostRepository';
 	import type { Post } from '$lib/types';
 	import ArticlePreviewHUD from './view/ArticlePreviewHUD.svelte';
+	import BlogSchedulerTimeline from './BlogSchedulerTimeline.svelte';
+	import BlogLinkGraphView from './BlogLinkGraphView.svelte';
 
 	let { articole = $bindable([]), refreshPosts }: {
 		articole: Post[],
@@ -17,6 +19,7 @@
 	let activeTab = $state<'content' | 'image' | 'seo'>('content');
 	let previewMode = $state(false);
 	let mobileModalTab = $state<'editor' | 'preview'>('editor');
+	let activeViewMode = $state<'table' | 'scheduler' | 'graph'>('table');
 
 	// Filtre
 	let searchFilter = $state('');
@@ -274,7 +277,36 @@
 			<span class="stat-mini-val">{articoleCiorna}</span>
 			<span class="stat-mini-lbl">Ciorne (Draft)</span>
 		</div>
+		<div class="stat-mini-card stat-scheduled" style="border-left: 3px solid #3b82f6;">
+			<span class="stat-mini-val" style="color:#60a5fa">{articole.filter(a => a.is_published && new Date(a.published_at || '') > new Date()).length}</span>
+			<span class="stat-mini-lbl">📅 Programate Viitor</span>
+		</div>
 	</div>
+
+	<!-- Selector Mod Vizualizare (Listă / Scheduler / Graf) -->
+	<div class="view-mode-tabs" style="display:flex; gap:10px; margin-bottom:20px;">
+		<button 
+			class="btn {activeViewMode === 'table' ? 'btn-primary' : 'btn-secondary'}" 
+			onclick={() => activeViewMode = 'table'}>
+			📋 Listă Articole ({totalArticole})
+		</button>
+		<button 
+			class="btn {activeViewMode === 'scheduler' ? 'btn-primary' : 'btn-secondary'}" 
+			onclick={() => activeViewMode = 'scheduler'}>
+			📅 Scheduler & Timeline ({articole.filter(a => a.is_published && new Date(a.published_at || '') > new Date()).length} viitoare)
+		</button>
+		<button 
+			class="btn {activeViewMode === 'graph' ? 'btn-primary' : 'btn-secondary'}" 
+			onclick={() => activeViewMode = 'graph'}>
+			🕸️ Graf Link Building (TAP)
+		</button>
+	</div>
+
+	{#if activeViewMode === 'scheduler'}
+		<BlogSchedulerTimeline {articole} onEditPost={(p) => deschideModal(p)} />
+	{:else if activeViewMode === 'graph'}
+		<BlogLinkGraphView {articole} />
+	{:else}
 
 	<!-- Controls / Filters -->
 	<div class="filtre-bara">
@@ -374,6 +406,7 @@
 				</tbody>
 			</table>
 		</div>
+	{/if}
 	{/if}
 </div>
 

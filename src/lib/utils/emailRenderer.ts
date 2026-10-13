@@ -19,6 +19,17 @@ export interface EmailTemplateConfig {
 	checklist_items: string[];
 }
 
+// Campurile venite de la utilizator (nume, eveniment, pozitie...) se escapeaza;
+// campurile din sablon (tpl.*) sunt scrise de admin si pot contine HTML intentionat.
+function esc(value: unknown): string {
+	return String(value ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
 export function buildConfirmationEmail(
 	recruitName: string,
 	eventTitle: string,
@@ -30,11 +41,19 @@ export function buildConfirmationEmail(
 	price: number,
 	tpl: EmailTemplateConfig
 ): string {
+	recruitName = esc(recruitName);
+	eventTitle = esc(eventTitle);
+	date = esc(date);
+	time = esc(time);
+	location = esc(location);
+	position = esc(position);
+	const safeTicketCode = esc(ticketCode);
+
 	const listHtml = (tpl.checklist_items || []).map((item) => '<li>' + item + '</li>').join('');
 
 	const ticketUrl = (tpl.ticket_cta_url || 'http://localhost:8080/index.html?ticket=CODE')
-		.replace('CODE', ticketCode)
-		.replace('{ticketCode}', ticketCode);
+		.replace('CODE', encodeURIComponent(ticketCode))
+		.replace('{ticketCode}', encodeURIComponent(ticketCode));
 
 	let ticketCtaBlock = '';
 	if (tpl.ticket_cta_enabled) {
@@ -81,7 +100,7 @@ export function buildConfirmationEmail(
 		// TICKET BOX
 		'<div style="background:rgba(197,160,48,0.08);border:1px solid #c5a030;border-radius:10px;padding:18px;text-align:center;margin-bottom:22px;box-shadow:0 4px 15px rgba(0,0,0,0.4);">' +
 		'<span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#c5a030;display:block;margin-bottom:6px;letter-spacing:1px;">' + tpl.ticket_box_title + '</span>' +
-		'<span style="font-family:monospace;font-size:22px;font-weight:900;color:#fff;letter-spacing:4px;background:#000;padding:8px 20px;border-radius:6px;display:inline-block;border:1px solid #333;margin-bottom:12px;">' + ticketCode + '</span>' +
+		'<span style="font-family:monospace;font-size:22px;font-weight:900;color:#fff;letter-spacing:4px;background:#000;padding:8px 20px;border-radius:6px;display:inline-block;border:1px solid #333;margin-bottom:12px;">' + safeTicketCode + '</span>' +
 		ticketCtaBlock +
 		'<p style="margin:6px 0 0 0;font-size:11.5px;color:#a0b8a0;font-style:italic;">' + tpl.ticket_instruction + '</p>' +
 		'</div>' +
