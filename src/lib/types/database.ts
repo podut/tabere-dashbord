@@ -857,6 +857,7 @@ export type Database = {
       get_my_notifications: { Args: { p_device_id: string }; Returns: unknown }
       get_my_read_notification_ids: { Args: { p_device_id: string }; Returns: unknown }
       handle_new_user: { Args: never; Returns: undefined }
+      admin_backup_dump: { Args: never; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       mark_notification_read: {
         Args: { p_notification_id: string; p_device_id: string }

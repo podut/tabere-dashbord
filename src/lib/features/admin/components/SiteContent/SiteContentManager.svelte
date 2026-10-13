@@ -127,18 +127,24 @@
 		await refreshSite();
 	}
 
+	const SECTION_LABELS: Record<string, string> = {
+		home_hero: 'Banner Acasă',
+		services_hero: 'Banner Servicii',
+		events_hero: 'Banner Evenimente'
+	};
+
 	const onboardingSection = $derived(continutSite.find((s: any) => s.section_id === 'onboarding'));
 </script>
 
 <div class="site-content-manager">
-	<p class="subtitle-text">Gerează imaginile de tip "Hero" și textele principale ale paginilor din aplicația mobilă.</p>
+	<p class="subtitle-text">Imaginile și textele de prezentare din aplicația mobilă: ecranul de start și bannerele paginilor Acasă, Servicii și Evenimente.</p>
 
 	<!-- Secțiunea Onboarding (poze site) -->
 	<div class="onboarding-section">
 		<div class="onboarding-header">
 			<div>
-				<h3 class="onboarding-title">Poze Onboarding</h3>
-				<p class="onboarding-desc">Imagini afișate la prima lansare a aplicației mobile. Poți adăuga mai multe imagini pentru un slideshow.</p>
+				<h3 class="onboarding-title">Ecran de întâmpinare</h3>
+				<p class="onboarding-desc">Imagini afișate la prima deschidere a aplicației mobile. Poți adăuga mai multe, se vor derula ca slideshow.</p>
 			</div>
 			<label class="btn-add-photos" title="Adaugă imagini" class:disabled={saving}>
 				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -168,7 +174,7 @@
 					<div class="site-card-no-img">Fără imagine</div>
 				{/if}
 				<div class="site-card-body">
-					<code class="section-id-code">{sec.section_id}</code>
+					<code class="section-id-code">{SECTION_LABELS[sec.section_id] ?? sec.section_id}</code>
 					<h4 class="site-card-title">{sec.title || '(fără titlu)'}</h4>
 					<p class="site-card-desc">{sec.description?.slice(0, 100) || 'Fără descriere...'}</p>
 

@@ -16,6 +16,7 @@
 	import EquipmentManager from '$lib/features/admin/components/Equipment/EquipmentManager.svelte';
 	import UsersManager from '$lib/features/admin/components/Users/UsersManager.svelte';
 	import SiteContentManager from '$lib/features/admin/components/SiteContent/SiteContentManager.svelte';
+	import BackupManager from '$lib/features/admin/components/Backup/BackupManager.svelte';
 	import NotificationsPanel from '$lib/features/admin/components/NotificationsPanel.svelte';
 	import ServicesManager from '$lib/features/admin/components/ServicesManager.svelte';
 	import GalleryManager from '$lib/features/admin/components/GalleryManager.svelte';
@@ -114,7 +115,8 @@
 					<button class:activ={adminState.sectiuneActiva === 'blog'} onclick={() => setSectiune('blog')}><span class="nav-icon">📰</span><span class="nav-label">Blog & Articole</span></button>
 					<button class:activ={adminState.sectiuneActiva === 'email'} onclick={() => setSectiune('email')}><span class="nav-icon">📬</span><span class="nav-label">Email & Newsletter</span></button>
 					<button class:activ={adminState.sectiuneActiva === 'notificari'} onclick={() => setSectiune('notificari')}><span class="nav-icon">📢</span><span class="nav-label">Notificări</span></button>
-					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => setSectiune('site')}><span class="nav-icon">🌐</span><span class="nav-label">Conținut Site</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'site'} onclick={() => setSectiune('site')}><span class="nav-icon">📱</span><span class="nav-label">Aplicație mobilă</span></button>
+					<button class:activ={adminState.sectiuneActiva === 'backup'} onclick={() => setSectiune('backup')}><span class="nav-icon">💾</span><span class="nav-label">Backup</span></button>
 				</nav>
 			</aside>
 
@@ -156,6 +158,8 @@
 					<NotificationsPanel evenimente={adminState.evenimente} />
 				{:else if adminState.sectiuneActiva === 'site'}
 					<SiteContentManager bind:continutSite={adminState.continutSite} refreshSite={() => adminState.refreshAll()} />
+				{:else if adminState.sectiuneActiva === 'backup'}
+					<BackupManager />
 				{/if}
 			</main>
 		</div>
@@ -180,7 +184,8 @@
 							{ id: 'blog', label: '📰 Blog & Articole' },
 							{ id: 'email', label: '📬 Email & Newsletter' },
 							{ id: 'notificari', label: '📢 Notificări' },
-							{ id: 'site', label: '🌐 Conținut Site' },
+							{ id: 'site', label: '📱 Aplicație mobilă' },
+							{ id: 'backup', label: '💾 Backup' },
 						] as r}
 							<button class:activ={adminState.sectiuneActiva === r.id} onclick={() => { setSectiune(r.id); mobileMenuOpen = false; }}>{r.label}</button>
 						{/each}
