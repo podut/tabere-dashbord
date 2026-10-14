@@ -14,6 +14,8 @@
 	let total = $state(0);
 	let lastBackup = $state<{ name: string; mb: string; at: string; files: number; failed: number } | null>(null);
 
+	let lastMail = $state<{ name: string; mb: string; at: string; messages: number; failed: number } | null>(null);
+
 	const CONCURRENCY = 6;
 
 	function stamp(d: Date) {
@@ -196,6 +198,44 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 		}
 	}
 
+	// Backup email: serverul panoului citește căsuțele (IMAP, cont dedicat backup@) și întoarce
+	// un .zip cu fișiere .eml. Aceeași parolă recentă ca la backup-ul complet.
+	async function backupEmail() {
+		if (loading) return;
+		loading = true;
+		done = 0;
+		total = 0;
+		phase = 'Se verifică parola…';
+		let client: SupabaseClient | null = null;
+		try {
+			client = await reauthClient();
+			const { data: s } = await client.auth.getSession();
+			phase = 'Se citesc căsuțele de email…';
+			const res = await fetch('/api/admin/mail-backup', {
+				method: 'POST',
+				headers: { Authorization: `Bearer ${s.session?.access_token}` }
+			});
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.error ?? `Eroare ${res.status}`);
+			}
+			const blob = await res.blob();
+			const messages = Number(res.headers.get('X-Mail-Messages') ?? 0);
+			const failed = Number(res.headers.get('X-Mail-Failed') ?? 0);
+			const now = new Date();
+			const name = `htcmx-mail-${stamp(now)}.zip`;
+			saveBlob(blob, name);
+			lastMail = { name, mb: (blob.size / 1048576).toFixed(1), at: now.toLocaleString('ro-RO'), messages, failed };
+			showToast(failed ? 'error' : 'success', failed ? `Backup email descărcat, dar ${failed} căsuțe nu au putut fi citite` : 'Backup email descărcat');
+		} catch (e: any) {
+			showToast('error', `Backup email eșuat: ${e?.message ?? 'eroare necunoscută'}`);
+		} finally {
+			await client?.auth.signOut({ scope: 'local' }).catch(() => {});
+			loading = false;
+			phase = '';
+		}
+	}
+
 	async function doarSql() {
 		if (loading) return;
 		loading = true;
@@ -269,6 +309,29 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 		<button class="btn-link" onclick={doarSql} disabled={loading || !password}>Doar baza de date (.sql, fără fișiere)</button>
 	</div>
 
+	<div class="backup-card mail-card">
+		<div class="backup-card-head">
+			<h3 class="backup-title">Backup email</h3>
+			<p class="backup-desc">
+				Arhivă <code>.zip</code> cu toate mesajele din căsuțele <code>@taberehtcmx.ro</code> (câte un fișier
+				<code>.eml</code> per mesaj, pe cont și dosar), plus scriptul de restaurare. Folosește parola de admin
+				introdusă mai sus.
+			</p>
+		</div>
+
+		<button class="btn-backup" onclick={backupEmail} disabled={loading || !password}>
+			{loading ? 'Se pregătește…' : '✉️ Descarcă backup email'}
+		</button>
+
+		{#if lastMail && !loading}
+			<p class="backup-last">
+				Ultimul backup email: <strong>{lastMail.name}</strong> · {lastMail.mb} MB · {lastMail.messages} mesaje
+				{#if lastMail.failed > 0}· <span class="warn">{lastMail.failed} căsuțe nereușite</span>{/if}
+				· {lastMail.at}
+			</p>
+		{/if}
+	</div>
+
 	<div class="backup-note">
 		<h4>Restaurare</h4>
 		<p>
@@ -291,6 +354,7 @@ print(f"Gata: {ok} incarcate, {bad} erori")
 <style>
 	.subtitle-text { color: var(--text-grey); font-size: 1.4rem; margin-bottom: 2.4rem; font-weight: 500; }
 	.backup-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.4rem; display: flex; flex-direction: column; gap: 1.6rem; align-items: flex-start; margin-bottom: 2.4rem; }
+	.mail-card { margin-top: 2rem; }
 	.backup-title { font-size: 2rem; font-weight: 700; color: var(--text); margin: 0 0 0.4rem; }
 	.backup-desc { font-size: 1.3rem; color: var(--text-grey); margin: 0; }
 	.btn-backup { background: var(--primary); color: var(--bg-dark); border: none; border-radius: 10px; padding: 1.2rem 2.4rem; font-size: 1.6rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }

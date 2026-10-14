@@ -25,6 +25,7 @@
 	"dependencies": {
 		"@supabase/supabase-js": "^2.105.4",
 		"fflate": "^0.8.3",
+		"imapflow": "^2.4.2",
 		"svelte-easy-crop": "^5.0.1"
 	},
 	"overrides": {
