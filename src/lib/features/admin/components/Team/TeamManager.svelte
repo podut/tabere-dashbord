@@ -31,6 +31,9 @@
 	let loading = $state(true);
 	let saving = $state(false);
 	let password = $state(''); // parola adminului curent (confirmare)
+	let tempPassword2 = $state(''); // reintroducerea parolei temporare
+	let showTempPw = $state(false);
+	let showAdminPw = $state(false);
 
 	// Formular: contul pe care îl editezi / creezi
 	let editing = $state<{ id?: string; email: string; name: string; role: 'client' | 'admin'; permissions: string[]; tempPassword: string } | null>(null);
@@ -57,6 +60,9 @@
 	onMount(load);
 
 	function newMember() {
+		tempPassword2 = '';
+		showTempPw = false;
+		showAdminPw = false;
 		editing = { email: '', name: '', role: 'client', permissions: [], tempPassword: '' };
 	}
 
@@ -92,6 +98,10 @@
 		const e = editing;
 		if (e.role !== 'admin' && e.permissions.length === 0) {
 			showToast('error', 'Alege cel puțin o secțiune (sau rol Admin)');
+			return;
+		}
+		if (!e.id && e.tempPassword !== tempPassword2) {
+			showToast('error', 'Parolele temporare nu coincid');
 			return;
 		}
 		saving = true;
@@ -170,7 +180,19 @@
 						<input type="email" bind:value={editing.email} placeholder="ion@exemplu.ro" autocomplete="off" />
 					</label>
 					<label>Parolă temporară (min. 10 caractere)
-						<input type="text" bind:value={editing.tempPassword} placeholder="trimite-i-o în siguranță" autocomplete="off" />
+						<span class="pwfield">
+							<input type={showTempPw ? 'text' : 'password'} bind:value={editing.tempPassword} placeholder="trimite-i-o în siguranță" autocomplete="new-password" />
+							<button type="button" class="eye" onclick={() => (showTempPw = !showTempPw)} aria-label={showTempPw ? 'Ascunde parola' : 'Arată parola'} aria-pressed={showTempPw}>{showTempPw ? '🙈' : '👁'}</button>
+						</span>
+					</label>
+					<label>Repetă parola temporară
+						<span class="pwfield" class:mismatch={tempPassword2 !== '' && tempPassword2 !== editing.tempPassword}>
+							<input type={showTempPw ? 'text' : 'password'} bind:value={tempPassword2} placeholder="aceeași parolă" autocomplete="new-password" />
+							<button type="button" class="eye" onclick={() => (showTempPw = !showTempPw)} aria-label={showTempPw ? 'Ascunde parola' : 'Arată parola'} aria-pressed={showTempPw}>{showTempPw ? '🙈' : '👁'}</button>
+						</span>
+						{#if tempPassword2 !== '' && tempPassword2 !== editing.tempPassword}
+							<small class="err">Parolele nu coincid</small>
+						{/if}
 					</label>
 				</div>
 			{:else}
@@ -198,7 +220,10 @@
 			{/if}
 
 			<label class="pw">Parola ta de admin (confirmare)
-				<input type="password" autocomplete="current-password" bind:value={password} placeholder="••••••••" />
+				<span class="pwfield narrow">
+					<input type={showAdminPw ? 'text' : 'password'} autocomplete="current-password" bind:value={password} placeholder="••••••••" />
+					<button type="button" class="eye" onclick={() => (showAdminPw = !showAdminPw)} aria-label={showAdminPw ? 'Ascunde parola' : 'Arată parola'} aria-pressed={showAdminPw}>{showAdminPw ? '🙈' : '👁'}</button>
+				</span>
 			</label>
 
 			<div class="row">
@@ -252,6 +277,13 @@
 	.card h3 { margin: 0; font-size: 1.9rem; color: var(--text); }
 	.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr)); gap: 1.2rem; }
 	label { display: flex; flex-direction: column; gap: 0.5rem; font-size: 1.3rem; color: var(--text-grey); }
+	.pwfield { position: relative; display: flex; align-items: center; }
+	.pwfield input { width: 100%; padding-right: 4.4rem; }
+	.pwfield.narrow { max-width: 36rem; }
+	.pwfield.mismatch input { border-color: #e5484d; }
+	.eye { position: absolute; right: 0.6rem; background: transparent; border: none; cursor: pointer; font-size: 1.7rem; line-height: 1; padding: 0.4rem 0.6rem; color: var(--text-grey); }
+	.eye:hover { color: var(--primary); }
+	.err { color: #e5484d; font-size: 1.15rem; }
 	input[type='text'], input[type='email'], input[type='password'], input:not([type]) {
 		background: var(--bg-dark); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; font-size: 1.4rem;
 	}
